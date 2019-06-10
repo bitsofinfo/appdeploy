@@ -149,3 +149,11 @@ appdeploy:
     readiness:
       containerPort: 3333
 ```
+
+
+# Using
+
+```
+helm plugin install https://github.com/aslafy-z/helm-git.git
+helm repo add bitsofinfo-appdeploy git+https://github.com/bitsofinfo/appdeploy@
+```
