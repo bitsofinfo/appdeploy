@@ -1,0 +1,286 @@
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# basicapp values.yaml defaults
+#   - Required items are marked as such
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# At a minimum you need to provide these 3 variables
+app:
+  name: ""         # required
+  environment: ""  # required
+  context: ""      # required
+
+  # and ...optionally "classifier" default nothing. Typically used for
+  # apps that expose multiple ports where only certain port(s)
+  # are relevant for the app depending on what "classifier" it is
+  # Services/Ingresses are not generated for ports that do not match
+  # this classifier value if it is not empty
+  #
+  # See containerPorts.[classifiers]
+  classifier: ""
+
+
+# Basic Deployment image properties that are REQUIRED to be set
+image:
+  repository: "" # Required
+  tag: ""        # Required
+  pullPolicy: IfNotPresent
+
+
+# The label "names" (i.e. keys) for common labels
+# that will be applied to all created k8s objects
+labelNames:
+  appName: "app-name"
+  appContext: "app-context"
+  appEnvironment: "app-environment"
+  appVersion: "app-version"
+  appClassifier: "app-classifier"
+  creatorId: "app-creator-id"
+
+
+# meta-variable subsitution supported here. See README
+env:
+  #ENV_VAR_1:
+  # value: "something"
+  #ENV_VAR_2:
+  # value: "something"
+
+
+# The number of replicas for the generated Deployment
+replicaCount: 1
+
+
+# The user installing/upgrading the chart
+# this will be decorated on every object as
+# an additional label
+creatorId: "unknown@somewhere.com"
+
+
+# The k8s ServiceAccount pods will run as
+# this is NOT the uid:gid the process rus as (see securityContext)
+serviceAccount:
+  name: "default" # meta-variable subsitution supported here. See README
+  create: false
+
+  # If create is TRUE; If you MUST define the following items
+  # this will create the ServiceAccount, [Cluster]Role, [Cluster]RoleBinding
+  #kind: ClusterRole|Role
+  #namespace: "[[#namespace]]"
+  #apiGroups: [""]  # "" indicates the core API group
+  #resources: []
+  #verbs: []
+
+# Optiona: The k8s secret name to be used if the Deployment object
+# needs to pull images (i.e. if your image.repository is custom)
+# should be an array of k8s secret names (strings)
+imagePullSecrets: []
+
+
+# You should list at least ONE containerPort
+containerPorts:
+  # Each containerPort has various options
+  #- port: 9000
+  #  name: apache-https
+  #  ingress: true  # if an Ingress should be generated for this port
+  #  service: true  # if an Service should be generated for this port
+  #  tls: true      # if the port exposes TLS
+  #  classifiers: ["something"]   # this is an optional property
+
+
+# optional aliases. Each alias will be used to generate
+# an additional version specific ingress FQDN in addition to the
+# standard one from app.name
+aliases: []
+
+# Options to customize the securityContext of Pods in the Deployment
+securityContext:
+  allowPrivilegeEscalation: false
+  #runAsUser: 9999
+  #runAsGroup: 9999
+
+# Deployment customization
+deployment:
+  template:
+    # meta-variable subsitution supported in values here. See README
+    labels: []
+    #  - name: "label-name"
+    #    value: "label value"
+
+# Options to customize the generated version specific Service
+service:
+  type: ClusterIP
+  # meta-variable subsitution supported in values here. See README
+  labels: []
+  #  - name: "label-name"
+  #    value: "label value"
+
+
+# Options to customize the generated version specific Ingresses (one per port)
+# NOTE! if you want to deploy your own "isolated" version specific app instance
+# that does not collide with any others, simply tweak the fqdnSuffix:
+#
+# i.e. ingress.dns.fqdnSuffix="-[unique-tag].local"
+#
+ingress:
+  dns:
+    fqdnSuffix: ".local"
+  tls:
+    enabled: false
+    secretName: ""
+  metadata:
+    labels: []
+    #  - name: "label-name"
+    #    value: "label value"
+    annotations: []
+      #- name: "some-annotation"
+      #  value: "value"
+
+
+# Options to customize the bootstrapSecret secret/mount details
+# This is optional via the flag "enabled"
+bootstrapSecret:
+  enabled: false
+  k8Secret:
+    valueKey: "bootstrap_secret"
+    secretValue: ""  # REQUIRED! you must provide this if enabled
+  mount:
+    path: "/opt/secrets"
+    fileName: "bootstrap-secret"
+
+# Resources customization
+resources:
+  limits:
+    cpu: "1"
+  requests:
+    cpu: ".25"
+
+
+# Healthcheck customization
+# YOU must provide containerPort for each one
+healthcheck:
+  liveness:
+    scheme: "HTTPS"
+    #containerPort:    # Required
+    path: "/health"
+    disabled: "false"
+    initialDelaySeconds: 120
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    scheme: "HTTPS"
+    #containerPort:   # Required
+    path: "/health"
+    disabled: "false"
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 1
+
+
+# Optional but your chart should provide these
+# meta-variable subsitution supported here. See README
+command:
+  #command: ["java"]
+
+  #preArgs: (optional)
+  # -"preArg1"
+
+  #args:
+  # -"arg1"
+
+  #postArgs: (optional)
+  # -"postArg1"
+
+
+
+# Customization of post-deploy, pre-delete helm hooks
+# @see https://github.com/bitsofinfo/kubernetes-helm-healthcheck-hook
+# NOTE you may want to adjust your helm client timeouts
+# accordingly to wait for these
+hooks:
+
+  # After install/upgrade we auto-check /health by default
+  # and then alert on the results.
+  postInstallUpgrade:
+    image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.15"
+    maxRetries: 60
+    sleepSeconds: 30
+    hookDeletePolicy: hook-succeeded,before-hook-creation
+    debugOutput: false
+    checksConfig:
+      - name: "/health check"
+        path: "/health"
+        method: "GET"
+        timeout: 5
+        retries: 30
+        tags: ["80","443"]
+    slackConfig:
+      - name: "post-deploy #k8-deployment-info"
+        # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
+        # the #bitsofinfo-dev channel
+        webhook_url: https://hooks.slack.com/services/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
+        template: >
+          {
+            "text":"*Deployed:* {{ check_name }} *{{ 'OK' if overall_result else 'FAILED' }}* ",
+            "attachments": [
+                {
+                  "color": "{{ 'good' if overall_result else 'danger' }}",
+                  "fields": [
+                    {
+                      "value":"{{ check_name }} has been deployed by *{{ extra_props.creatorId }}*. {{ 'All checks below are *OK*' if overall_result else 'One or more checks below *FAILED*' }}"
+                    }
+                  ]
+                }
+
+                {% for check in checks %}
+                  ,{
+                    "color": "{{ 'good' if check.result.success else 'danger' }}",
+                    "fields": [
+                      {
+                        "value":"{{ check.method }} *{{ check.path }}* *{{ 'SUCCEEDED' if check.result.success else 'FAILED' }}* with *{{ check.result.code }}*. {% if not check.result.success %}*reason:* {{ check.result.error }}{% endif %}"
+                      }
+                    ]
+                  }
+              {% endfor %}
+            ]
+          }
+
+  # After helm delete we validate that a 404 is returned
+  # for / for the generated ingress (i.e. it should be gone!)
+  postDelete:
+    image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.15"
+    maxRetries: 60
+    sleepSeconds: 30
+    hookDeletePolicy: hook-succeeded,before-hook-creation
+    debugOutput: false
+    checksConfig:
+      - name: "/ post delete check"
+        path: "/"
+        method: "GET"
+        is_healthy:
+          # DNS issues also affirmative of it being deleted (if auto-dns removes name)
+          error_msg_reasons: ["Name does not resolve"]
+        is_not_healthy:
+          # anything OTHER than 200 is healthy.. (i.e. app does not exist)
+          response_codes: [200]
+        timeout: 5
+        retries: 30
+    slackConfig:
+      - name: "post-delete #k8-deployment-info"
+        # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
+        # the #bitsofinfo-dev channel
+        webhook_url: https://hooks.slack.com/services/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
+        template: >
+          {
+            "text":"*Removed:* {{ check_name }} *{{ 'OK' if overall_result else 'FAILED' }}* ",
+            "attachments": [
+                {
+                  "color": "{{ 'good' if overall_result else 'danger' }}",
+                  "fields": [
+                    {
+                      "value":"{{ check_name }} has been removed by *{{ extra_props.creatorId }}*."
+                    }
+                  ]
+                }
+            ]
+          }
