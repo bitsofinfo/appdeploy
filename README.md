@@ -69,7 +69,7 @@ helm install \
   --debug \
   --namespace my-apps \
   --name myapp-1.0 \
-  basicapp \
+  appdeploy \
   --set image.repository="nginx" \
   --set image.tag="latest" \
   --set app.name="myapp" \
