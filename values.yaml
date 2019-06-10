@@ -202,7 +202,7 @@ hooks:
   # After install/upgrade we auto-check /health by default
   # and then alert on the results.
   postInstallUpgrade:
-    image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.15"
+    image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
     maxRetries: 60
     sleepSeconds: 30
     hookDeletePolicy: hook-succeeded,before-hook-creation
@@ -215,7 +215,8 @@ hooks:
         retries: 30
         tags: ["80","443"]
     slackConfig:
-      - name: "post-deploy #k8-deployment-info"
+      postDeploy:
+        name: "post-deploy"
         # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
         # the #bitsofinfo-dev channel
         webhook_url: https://hooks.slack.com/services/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
@@ -248,7 +249,7 @@ hooks:
   # After helm delete we validate that a 404 is returned
   # for / for the generated ingress (i.e. it should be gone!)
   postDelete:
-    image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.15"
+    image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
     maxRetries: 60
     sleepSeconds: 30
     hookDeletePolicy: hook-succeeded,before-hook-creation
@@ -266,7 +267,8 @@ hooks:
         timeout: 5
         retries: 30
     slackConfig:
-      - name: "post-delete #k8-deployment-info"
+      postDelete:
+        name: "post-delete"
         # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
         # the #bitsofinfo-dev channel
         webhook_url: https://hooks.slack.com/services/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
