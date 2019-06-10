@@ -150,6 +150,12 @@ appdeploy:
       containerPort: 3333
 ```
 
+## Helm package/update
+
+```
+helm package . -d repo/charts/
+helm repo index repo/
+```
 
 # Using
 

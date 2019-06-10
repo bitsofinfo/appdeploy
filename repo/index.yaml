@@ -1,0 +1,13 @@
+apiVersion: v1
+entries:
+  appdeploy:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: 2019-06-10T14:06:07.548188-06:00
+    description: Chart for deploying version specific artifacts
+    digest: fcfe4404906e1758fd44301d270424a4e8d2addc4bef3627838ebb55e595f7a5
+    name: appdeploy
+    urls:
+    - charts/appdeploy-1.0.0.tgz
+    version: 1.0.0
+generated: 2019-06-10T14:06:07.546117-06:00
