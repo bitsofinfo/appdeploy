@@ -99,9 +99,7 @@ helm install \
   --set ingress.metadata.annotations[1].value="traefik" \
   --set ingress.dns.fqdnSuffix=".local" \
   --set ingress.metadata.labels[0].name="my-ingress" \
-  --set ingress.metadata.labels[0].value="internal" \
-  --set hooks.postDelete.hookDeletePolicy="before-hook-creation" \
-  --set hooks.postInstallUpgrade.hookDeletePolicy="before-hook-creation"
+  --set ingress.metadata.labels[0].value="internal"
 
 helm list
 
