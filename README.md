@@ -160,6 +160,13 @@ helm repo index repo/
 # Using
 
 ```
-helm plugin install https://github.com/aslafy-z/helm-git.git
-helm repo add appdeploy-master git+https://github.com/bitsofinfo/appdeploy@?ref=master
+helm repo add bitsofinfo-appdeploy https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo
+```
+
+```
+# requirements.yaml
+dependencies:
+- name: appdeploy
+  version: "1.0.0"
+  repository: "https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo"
 ```
