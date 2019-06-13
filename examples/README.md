@@ -6,7 +6,12 @@ This should be enough to get your feet wet.
 
 ### Setup
 
-You have an [Traefik Ingress Controller Deployed](https://github.com/helm/charts/tree/master/stable/traefik).
+Ensure the Helm repo exists on your machine:
+```
+helm repo add bitsofinfo-appdeploy https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo
+```
+
+Lets get a [Traefik Ingress Controller Deployed](https://github.com/helm/charts/tree/master/stable/traefik).
 
 *Note Traefik is not a requirement to use `appdeploy` but just the one picked for this example...*
 ```

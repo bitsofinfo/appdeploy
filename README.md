@@ -14,6 +14,7 @@ as a single Docker `image:tag/version` to be deployed to a Kubernetes cluster wh
 * [Diagram](#diag)
 * [Examples](examples/)
 * [Using as a dependency](#dependency)
+* [Packaging/Using](#pack)
 
 # <a id="convention"></a>Conventions
 
@@ -141,14 +142,14 @@ appdeploy:
       containerPort: 3333
 ```
 
-## Helm package/update
+## <a id="pack"></a>Helm package/update
 
 ```
 helm package . -d repo/charts/
 helm repo index repo/
 ```
 
-# Using
+## Using!
 
 ```
 helm repo add bitsofinfo-appdeploy https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo
@@ -158,6 +159,6 @@ helm repo add bitsofinfo-appdeploy https://raw.githubusercontent.com/bitsofinfo/
 # requirements.yaml
 dependencies:
 - name: appdeploy
-  version: "1.0.0"
+  version: "1.0.1"
   repository: "https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo"
 ```
