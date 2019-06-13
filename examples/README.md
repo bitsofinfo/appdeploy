@@ -1,11 +1,14 @@
 # Example
 
-Below is a basic example that you can deploy anything w/ this chart. In this case we don't utilize the `bootstrapSecret` as its
-not necessary for this demo. Post deploy/delete alerts will be sent to the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel
+Below is a basic example that you can deploy anything w/ this chart. In this case we don't utilize the `bootstrapSecret` as its not necessary for this demo. Post deploy/delete alerts will be sent to the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel
+
+This should be enough to get your feet wet.
 
 ### Setup
 
-You have an [Traefik Ingress Controller Deployed](https://github.com/helm/charts/tree/master/stable/traefik). Note Traefik is not a requirement to use `appdeploy` but just the one picked for this example...
+You have an [Traefik Ingress Controller Deployed](https://github.com/helm/charts/tree/master/stable/traefik).
+
+*Note Traefik is not a requirement to use `appdeploy` but just the one picked for this example...*
 ```
 helm install stable/traefik --name appdeploy-traefik \
   --namespace kube-system \
@@ -29,26 +32,25 @@ You have a host entry (or legit DNS) setup for the `LoadBalancer` for the instal
 kubectl get services -n kube-system | grep appdeploy-traefik
 ```
 
-/etc/hosts
+Add to your local `/etc/hosts` (unless you have DNS setup)
 ```
 [appdeploy-traefik-controller-lb-ip] appdeploy.test.local myapp-stage-context1-latest-80.local
 ```
 
-Hit the Traefik dashboard: https://appdeploy.test.local
+Now lets hit the Traefik dashboard to see all auto-configured frontends/backends via `Ingress`: https://appdeploy.test.local
 
-Create namespace:
+Create a new namespace for our app:
 ```
 kubectl create namespace my-apps
 ```
 
-Lets deploy an dummy app:
+Lets deploy an dummy app using the chart!
 ```
 helm install \
-  --dry-run \
   --debug \
   --namespace my-apps \
   --name myapp-1.0 \
-  ./appdeploy \
+  bitsofinfo-appdeploy/appdeploy --version 1.0.1 \
   --set image.repository="nginx" \
   --set image.tag="latest" \
   --set app.name="myapp" \
@@ -81,15 +83,31 @@ helm install \
   --set ingress.dns.fqdnSuffix=".local" \
   --set ingress.metadata.labels[0].name="appdeploy-ingress" \
   --set ingress.metadata.labels[0].value="yes"
-
-helm list
 ```
 
-Check traefik dashboard: https://appdeploy.test.local/dashboard/
+Wait for the install to complete:
+```
+helm list
 
-Hit the actual deployed artifact: http://myapp-stage-context1-latest-80.local
+kubectl get all -n my-apps
 
+kubectl get ingress -n my-apps
+
+kubectl get jobs -n my-apps
+```
+
+You should see a notification in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel
+
+Check traefik dashboard: https://appdeploy.test.local/dashboard/ to see the deployed backend
+
+Hit the actual deployed artifact: http://myapp-stage-context1-latest-80.local (assuming you have DNS setup) You should get a NGINX welcome page
+
+
+Cleanup:
+```
 helm delete --purge myapp-1.0
 
 helm delete --purge appdeploy-traefik
 ```
+
+You should see a app delete notification in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel

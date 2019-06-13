@@ -5,7 +5,17 @@ This is a fairly generic Helm chart that can deploy any Docker image to Kubernet
 The chart deploys a single app in an opinionated way that adheres to the conventions described below. Whereby an "app" is defined
 as a single Docker `image:tag/version` to be deployed to a Kubernetes cluster where the app container resides in a `Pod` by itself as part of a `Deployment` and *optionally* may require a single `bootstrapSecret` to bootstrap itself. The `Pods` are accessible via a `Service` as well as a dedicated `Ingress` bound to an auto-generated "version specific" hostname that is unique to the app's `image:tag`.
 
-# Conventions
+* [Conventions](#convention)
+* [What it does](#does)
+* [What its not intended for](#doesnot)
+* [Alerts](#alerts)
+* [Options](#options)
+* [Meta-variables](#metavar)
+* [Diagram](#diag)
+* [Examples](examples/)
+* [Using as a dependency](#dependency)
+
+# <a id="convention"></a>Conventions
 
 In addition to whatever target k8s `namespace` the chart deploys into, all apps (single Docker `image:tag` artifacts) are labeled and categorized as follows with the following logical values. These values are made available to you in your `values` as variables you can feed into your `Deployment`. *(see `meta-variable substitution` below)*
 
@@ -35,7 +45,7 @@ In short, the above concepts may or may not work for you, but have proved to be 
 In an of itself, this chart deploy's nothing as its default [values.yaml](values.yaml) is sparse on
 actual configuration that would actually instantiate anything. For example its `image.repository`, `image.tag`, `env` and `command` are empty and up to you to provide the values for those items.
 
-## What it does
+## <a id="does"></a>What it does
 
 This chart produces the following "version specific" Kubernetes YAML objects that adhere to a general convention described above.
 
@@ -50,7 +60,7 @@ Depending on your `values` customizations, this Chart can produce the following 
 * **Ingress**: one or more, depending on the apps `containerPorts` configuration with hostname naming convention `[appname]-[context]-[image.tag][-[classifier]][-[port]]` at the configured `ingress.dns.fqdnSuffix`
 * **Helm Hooks**: Post deploy/delete health checks (`Jobs`) and alerts to Slack as well as additional/optional arbitrary `Jobs` for doing things like migrations etc.
 
-## What its not intended for
+## <a id="doesnot"></a>What its not intended for
 
 This chart is NOT intended to wire your app up to one or more custom "live user facing" hostnames (i.e. www.myProdUserFacingWebsite.com) or do canary releases etc; if you are interested in that you should look at the [appconduits Helm chart](https://github.com/bitsofinfo/appconduits). The primary intent of the `appdeploy` chart is simple to deploy a new version of an app; validate it, notify the team, and provide a **version specific** `Ingress` `host` binding to access it via an Ingress Controller. If you want to route traffic to your app via other `hosts:` or sophisticated routing rules, you should be creating separate/custom `Service` and `Ingress` combinations; again see [appconduits](https://github.com/bitsofinfo/appconduits).
 
@@ -58,21 +68,21 @@ This chart is NOT intended to wire your app up to one or more custom "live user 
 
 When using all available options, each invocation of `appdeploy` can produce a single point of management Helm `release` that is comprised all of the components described above. No matter how many different applications your team manages, if you follow some simple conventions as well externalizing the bulk of application specific configuration, secured via a unique (and limited life) `bootstrapSecret`; you can really begin to see the economies of scale for a unified DevOps deployment approach no matter what the artifact.
 
-![Diagram of appdeploy](/docs/diag.png "Diagram1")
+<a id="diag"></a>![Diagram of appdeploy](/docs/diag.png "Diagram1")
 
 
-## Post install/upgrade/delete checks and alerts
+## <a id="alerts"></a>Post install/upgrade/delete checks and alerts
 
 The checking and alerting engine leverages: https://github.com/bitsofinfo/kubernetes-helm-healthcheck-hook
 
-## Configurable options
+## <a id="options"></a>Configurable options
 
 All configurable options are documented in [values.yaml](values.yaml)
 
 See the [helm docs for setting values](https://github.com/helm/helm/blob/master/docs/chart_best_practices/values.md)
 on how to customize/change these values when doing a `helm ...` invocation.
 
-## meta-variable substitution
+## <a id="metavar"></a>meta-variable substitution
 
 Certain `values` can contain "meta-variables" that will be parsed into real values which
 can be useful when specifying `env` vars or `command.args` values. You can use these meta-variables
@@ -92,7 +102,7 @@ directly in your `values` and they will be replaced with the real value as noted
 For examples see the [examples/ folder](examples/)
 
 
-## As a dependency in another chart
+## <a id="dependency"></a>As a dependency in another chart
 
 Build it: `helm package appdeploy`
 
