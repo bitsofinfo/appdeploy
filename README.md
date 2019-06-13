@@ -46,7 +46,7 @@ Depending on your `values` customizations, this Chart can produce the following 
 * **Deployment**: for the app's `Pod` specification, optionally mounting the `bootstrapSecret` and presenting as the K8s generated `ServiceAccount` above within the cluster.
 * **Service**: to access all the app's `containerPorts`
 * **Ingress**: one or more, depending on the apps `containerPorts` configuration
-* **Helm Hooks**: Post deploy/delete health checks (`Jobs`) and alerts to Slack as well as additional/optional arbitrary `Jobs`
+* **Helm Hooks**: Post deploy/delete health checks (`Jobs`) and alerts to Slack as well as additional/optional arbitrary `Jobs` for doing things like migrations etc.
 
 When using all available options, each invocation of `appdeploy` can produce a single easy to manage Helm `release` that produces all of the components described above. No matter how many different applications your team manages, if you follow some simple conventions as well externalizing the bulk of application specific configuration, secured via a unique (and limited life) `bootstrapSecret`; you can really begin to see the economies of scale for a unified DevOps deployment approach no matter what the artifact.
 
