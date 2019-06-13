@@ -427,6 +427,7 @@ spec:
     here for the Job to consume, technically
     not a Hook due to lack of annotation)
 ------------------------------------------ */}}
+  {{ if .hooks.postInstallUpgrade.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -476,9 +477,17 @@ spec:
             - "checker.py"
           args:
             - "--check-name"
+            {{ if .hooks.postInstallUpgrade.useIngressHost }}
             - "{{ printf "%s-%s%s" .fullAppIdentifier (.containerPort.port | toString) .ingress.dns.fqdnSuffix }}"
+            {{ else }}
+            - "{{ printf "%s.%s.svc.cluster.local:%s" .fullAppIdentifier .releaseNamespace (.containerPort.port | toString) }}"
+            {{ end }}
             - "--target-root-url"
+            {{ if .hooks.postInstallUpgrade.useIngressHost }}
             - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s" .fullAppIdentifier (.containerPort.port | toString) .ingress.dns.fqdnSuffix }}"
+            {{ else }}
+            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .fullAppIdentifier .releaseNamespace (.containerPort.port | toString) }}"
+            {{ end }}
             - "--max-retries"
             - "{{ .hooks.postInstallUpgrade.maxRetries }}"
             - "--sleep-seconds"
@@ -500,11 +509,14 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/hc-config
+  {{ end }}
+
 
 
 {{/* -------------------------------------
      HOOK Support: POST DELETE ConfigMap
 ------------------------------------------ */}}
+  {{ if .hooks.postDelete.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -559,9 +571,17 @@ spec:
             - "checker.py"
           args:
             - "--check-name"
+            {{ if .hooks.postInstallUpgrade.useIngressHost }}
             - "{{ printf "%s-%s%s" .fullAppIdentifier (.containerPort.port | toString) .ingress.dns.fqdnSuffix }}"
+            {{ else }}
+            - "{{ printf "%s.%s.svc.cluster.local:%s" .fullAppIdentifier .releaseNamespace (.containerPort.port | toString) }}"
+            {{ end }}
             - "--target-root-url"
+            {{ if .hooks.postInstallUpgrade.useIngressHost }}
             - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s" .fullAppIdentifier (.containerPort.port | toString) .ingress.dns.fqdnSuffix }}"
+            {{ else }}
+            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .fullAppIdentifier .releaseNamespace (.containerPort.port | toString) }}"
+            {{ end }}
             - "--max-retries"
             - "{{ .hooks.postDelete.maxRetries }}"
             - "--sleep-seconds"
@@ -581,7 +601,7 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/hc-config
-
+  {{ end }}
 {{ end -}}
 
 

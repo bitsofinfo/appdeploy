@@ -87,62 +87,10 @@ directly in your `values` and they will be replaced with the real value as noted
 * `[[#fullAppIdentifier]]`: replaced with value of `[app.name]-[app.context]-[image.tag | replace "." "-"][-[app.classifier]]`
 * `[[#bootstrapSecretFilePath]]`: replaced with value of `.Values.bootstrapSecret.mount.path/.Values.bootstrapSecret.mount.fileName`
 
+## Examples
 
-## Simple example
+For examples see the [examples/ folder](examples/)
 
-Here is a simple standalone example to simply show what would be generated:
-
-(take out `--dry-run` to actually deploy it...)
-
-This is not realistic, but simply a demo.
-
-```
-kubectl create namespace my-apps
-
-helm install \
-  --dry-run \
-  --debug \
-  --namespace my-apps \
-  --name myapp-1.0 \
-  bitsofinfo-appdeploy/appdeploy --version 1.0.0 \
-  --set image.repository="nginx" \
-  --set image.tag="latest" \
-  --set app.name="myapp" \
-  --set app.environment="stage" \
-  --set app.context="stage-context1" \
-  --set containerPorts[0].service=true \
-  --set containerPorts[0].port=80 \
-  --set containerPorts[0].port=80 \
-  --set containerPorts[0].name=nginx80 \
-  --set containerPorts[0].ingress=true \
-  --set containerPorts[0].tls=false \
-  --set healthcheck.liveness.containerPort=80 \
-  --set healthcheck.liveness.path=/ \
-  --set healthcheck.liveness.scheme=HTTP \
-  --set healthcheck.readiness.containerPort=80 \
-  --set healthcheck.readiness.path=/ \
-  --set healthcheck.readiness.scheme=HTTP \
-  --set hooks.postInstallUpgrade.checksConfig[0].path=/ \
-  --set hooks.postInstallUpgrade.checksConfig[0].name="/" \
-  --set hooks.postInstallUpgrade.checksConfig[0].method="GET" \
-  --set hooks.postInstallUpgrade.checksConfig[0].timeout=5 \
-  --set hooks.postInstallUpgrade.checksConfig[0].retries=15 \
-  --set-string hooks.postInstallUpgrade.checksConfig[0].tags[0]=80 \
-  --set ingress.metadata.annotations[0].name="my-external-dns" \
-  --set ingress.metadata.annotations[0].value="enabled" \
-  --set ingress.metadata.annotations[1].name="kubernetes.io/ingress.class" \
-  --set ingress.metadata.annotations[1].value="traefik" \
-  --set ingress.dns.fqdnSuffix=".local" \
-  --set ingress.metadata.labels[0].name="my-ingress" \
-  --set ingress.metadata.labels[0].value="internal"
-
-helm list
-
-# assumes you have external-dns running for this domain OR a hosts file entry
-curl -k -v http://myapp-stage-context1-latest-80.local
-
-helm delete --purge myapp-1.0
-```
 
 ## As a dependency in another chart
 

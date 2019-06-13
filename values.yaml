@@ -202,6 +202,10 @@ hooks:
   # After install/upgrade we auto-check /health by default
   # and then alert on the results.
   postInstallUpgrade:
+    enabled: true
+    # if false, will use k8s service name
+    # [fullAppIdentifier].[.Release.Namespace].svc.cluster.local:[port] and NOT go via Ingress
+    useIngressHost: true
     image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
     maxRetries: 60
     sleepSeconds: 30
@@ -249,6 +253,10 @@ hooks:
   # After helm delete we validate that a 404 is returned
   # for / for the generated ingress (i.e. it should be gone!)
   postDelete:
+    enabled: true
+    # if false, will use k8s service name
+    # [fullAppIdentifier].[.Release.Namespace].svc.cluster.local:[port] and NOT go via Ingress
+    useIngressHost: true
     image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
     maxRetries: 60
     sleepSeconds: 30
