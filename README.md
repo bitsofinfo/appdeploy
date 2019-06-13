@@ -52,7 +52,7 @@ Depending on your `values` customizations, this Chart can produce the following 
 
 ## What its not intended for
 
-This chart is NOT intended to wire your app up to one or more custom "live user facing" hostnames (i.e. www.mybigwebsite.com) or do canary releases etc; if you are interested in that you should look at the [appconduits Helm chart](https://github.com/bitsofinfo/appconduits). The primary intent of the `appdeploy` chart is simple to deploy a new version of an app; validate it, notify the team, and provide a **version specific** `Ingress` `host` binding to access it via an Ingress Controller.
+This chart is NOT intended to wire your app up to one or more custom "live user facing" hostnames (i.e. www.myProdUserFacingWebsite.com) or do canary releases etc; if you are interested in that you should look at the [appconduits Helm chart](https://github.com/bitsofinfo/appconduits). The primary intent of the `appdeploy` chart is simple to deploy a new version of an app; validate it, notify the team, and provide a **version specific** `Ingress` `host` binding to access it via an Ingress Controller.
 
 ---
 
