@@ -43,7 +43,7 @@ Depending on your `values` customizations, this Chart can produce the following 
 
 * **RBAC**: an optional RBAC `ServiceAccount`, `[Cluster]Role`, `[Cluster]RoleBinding`
 * **Secret**: for the app's `bootstrapSecret`
-* **Deployment**: for the app's `Pod` specification, optionally mounting the `bootstrapSecret` and running as the K8s generated `ServiceAccount` above.
+* **Deployment**: for the app's `Pod` specification, optionally mounting the `bootstrapSecret` and presenting as the K8s generated `ServiceAccount` above.
 * **Service**: to access all the app's `containerPorts`
 * **Ingress**: one or more, depending on the apps `containerPorts` configuration
 * **Helm Hooks**: Post deploy/delete health checks (`Jobs`) and alerts to Slack as well as additional/optional arbitrary `Jobs`
