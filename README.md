@@ -1,32 +1,57 @@
 # appdeploy
 
-This is a Helm chart that can deploy an single application
-Docker image in a standard convention based way.
+This is a fairly generic Helm chart that can deploy any Docker image to Kubernetes in an opinionated fashion.
 
-# IN PROGRESS
+The chart deploys a single app in an opinionated way that adheres to the conventions described below. Whereby an "app" is defined
+as a single Docker `image:tag/version` to be deployed to a Kubernetes cluster where the app container resides in a `Pod` by itself as part of a `Deployment` and *optionally* may require a single `bootstrapSecret` to bootstrap itself. The `Pods` are accessible via a `Service` as well as a dedicated `Ingress` bound to an auto-generated "version specific" hostname that is unique to the app's `image:tag`.
+
+# Conventions
+
+In addition to whatever target k8s `namespace` the chart deploys into, all apps (single Docker `image:tag` artifacts) are labeled and categorized as follows with the following logical values. These values are made available to you in your `values` as variables you can feed into your `Deployment`. *(see `meta-variable substitution` below)*
+
+### appname
+The logical *name* for the application being deployed.
+
+### version
+The the version of the app, i.e. its `image.tag`
+
+### environment
+As one would expect, an *environment* is something like `dev`, `qa`, `prod` or `stage`.
+
+### context
+Within an *environment*, one or more *contexts* can exist as a way to logically sub-divide applications within an *environment*. The loose rule is that all applications sharing the same *context* talk to one another or similar configuration sources/databases etc. *Contexts* permit a level of classification that applications can use to alter how they bootup, configs they load etc. within an *environment*. The name of a *context* generally includes the *environment* implicit in its name (i.e. `qa-silo1`)
+
+### classifier
+Sometimes an application artifact may operate in different *modes*, these different modes may enable or disable certain aspects of standard functionality provided by the artifact; such as the availability or lack thereof certain exposed APIs or ports.
+
+Again all of the above is simple a convention of this chart but does not physically *impose anything* on the artifacts you choose to deploy with this chart. These attributes are however made available to you as as variables in the chart itself that you can leverage to route into a Pod's `spec.template` commands, args and env variables; which can then subsequently be consumed to drive an app to make decisions on how to bootstrap itself, what configs to load etc. *(see `meta-variable substitution` below)*
+
+In short, the above concepts may or may not work for you, but have proved to be a useful set of conventions used in the real world and has worked pretty well.
 
 ## Important!
 
-In an of itself, this chart deploy's nothing its default [values.yaml](values.yaml) is sparse on
-actual app specific configuration, i.e. its `image.repository`, `image.tag`, `env` and `command` are empty.
+In an of itself, this chart deploy's nothing as its default [values.yaml](values.yaml) is sparse on
+actual configuration that would actually instantiate anything. For example its `image.repository`, `image.tag`, `env` and `command` are empty and up to you to provide the values for those items.
 
 ## What it does
 
-This chart produces the following "version specific" Kubernetes YAML objects that adhere
-to a general convention described above (TBD)
+This chart produces the following "version specific" Kubernetes YAML objects that adhere to a general convention described above.
 
-*"Version specific"*, meaning all artifacts produced with this chart will be
-appropriately named according to the `[appname]-[context]-[version][-[classifier]]`
-naming conventions.
+*"Version specific"*, meaning all artifacts produced with this chart will be appropriately named according with the following convention: `[appname]-[context]-[image.tag][-[classifier]]` naming conventions.
 
-Produced version specific artifacts:
+Depending on your `values` customizations, this Chart can produce the following version specific artifacts:
 
-* **RBAC**: optional RBAC `ServiceAccount`, `[Cluster]Role`, `[Cluster]RoleBinding`
-* **Secret**: for the app's bootstrap secret
-* **Deployment**: for the app's Pod specification
-* **Service**: to access all the app's ports
+* **RBAC**: an optional RBAC `ServiceAccount`, `[Cluster]Role`, `[Cluster]RoleBinding`
+* **Secret**: for the app's `bootstrapSecret`
+* **Deployment**: for the app's `Pod` specification, optionally mounting the `bootstrapSecret` and running as the generated `ServiceAccount` above.
+* **Service**: to access all the app's `containerPorts`
 * **Ingress**: one or more, depending on the apps `containerPorts` configuration
-* **Helm Hooks**: Post deploy/delete checks and alerts to slack
+* **Helm Hooks**: Post deploy/delete health checks (`Jobs`) and alerts to Slack as well as additional/optional arbitrary `Jobs`
+
+When using all available options, each invocation of `appdeploy` can produce a single easy to manage Helm `release` that produces all of the components described above. No matter how many different applications your team manages, if you follow some simple conventions as well externalizing the bulk of application specific configuration, secured via a unique (and limited life) `bootstrapSecret`; you can really begin to see the economies of scale for a unified DevOps deployment approach no matter what the artifact.
+
+![Diagram of appdeploy](/docs/diag.png "Diagram1")
+
 
 ## Post install/upgrade/delete checks and alerts
 
@@ -39,10 +64,11 @@ All configurable options are documented in [values.yaml](values.yaml)
 See the [helm docs for setting values](https://github.com/helm/helm/blob/master/docs/chart_best_practices/values.md)
 on how to customize/change these values when doing a `helm ...` invocation.
 
-## meta-variable subsitution
+## meta-variable substitution
 
 Certain `values` can contain "meta-variables" that will be parsed into real values which
-can be useful when specifying `env` vars or `command.args` values.
+can be useful when specifying `env` vars or `command.args` values. You can use these meta-variables
+directly in your `values` and they will be replaced with the real value as noted below.
 
 * `[[#app.name]]`: replaced with value of `.Values.app.name`
 * `[[#app.context]]`: replaced with value of `.Values.app.context`
@@ -60,8 +86,7 @@ Here is a simple standalone example to simply show what would be generated:
 
 (take out `--dry-run` to actually deploy it...)
 
-This is not realistic, but simply a demo that the chart can function on its own
-as well.
+This is not realistic, but simply a demo.
 
 ```
 kubectl create namespace my-apps
