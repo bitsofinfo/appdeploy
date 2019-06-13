@@ -64,12 +64,14 @@ This is not realistic, but simply a demo that the chart can function on its own
 as well.
 
 ```
+kubectl create namespace my-apps
+
 helm install \
   --dry-run \
   --debug \
   --namespace my-apps \
   --name myapp-1.0 \
-  appdeploy \
+  bitsofinfo-appdeploy/appdeploy --version 1.0.0 \
   --set image.repository="nginx" \
   --set image.tag="latest" \
   --set app.name="myapp" \
