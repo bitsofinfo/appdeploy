@@ -52,7 +52,7 @@ replicaCount: 1
 # The user installing/upgrading the chart
 # this will be decorated on every object as
 # an additional label
-creatorId: "unknown@somewhere.com"
+creatorId: "unknown@bitsofinfo.appdeploy.chart"
 
 
 # The k8s ServiceAccount pods will run as
