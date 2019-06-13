@@ -50,6 +50,12 @@ Depending on your `values` customizations, this Chart can produce the following 
 * **Ingress**: one or more, depending on the apps `containerPorts` configuration with hostname naming convention `[appname]-[context]-[image.tag][-[classifier]][-[port]]` at the configured `ingress.dns.fqdnSuffix`
 * **Helm Hooks**: Post deploy/delete health checks (`Jobs`) and alerts to Slack as well as additional/optional arbitrary `Jobs` for doing things like migrations etc.
 
+## What its not intended for
+
+This chart is NOT intended to wire your app up to one or more custom "live user facing" hostnames (i.e. www.mybigwebsite.com) or do canary releases etc; if you are interested in that you should look at the [appconduits Helm chart](https://github.com/bitsofinfo/appconduits). The primary intent of the `appdeploy` chart is simple to deploy a new version of an app; validate it, notify the team, and provide a **version specific** `Ingress` `host` binding to access it via an Ingress Controller.
+
+---
+
 When using all available options, each invocation of `appdeploy` can produce a single point of management Helm `release` that is comprised all of the components described above. No matter how many different applications your team manages, if you follow some simple conventions as well externalizing the bulk of application specific configuration, secured via a unique (and limited life) `bootstrapSecret`; you can really begin to see the economies of scale for a unified DevOps deployment approach no matter what the artifact.
 
 ![Diagram of appdeploy](/docs/diag.png "Diagram1")
