@@ -24,6 +24,8 @@ Within an *environment*, one or more *contexts* can exist as a way to logically 
 ### classifier
 Sometimes an application artifact may operate in different *modes*, these different modes may enable or disable certain aspects of standard functionality provided by the artifact; such as the availability or lack thereof certain exposed APIs or ports.
 
+---
+
 Again all of the above is simple a convention of this chart but does not physically *impose anything* on the artifacts you choose to deploy with this chart. These attributes are however made available to you as as variables in the chart itself that you can leverage to route into a Pod's `spec.template` commands, args and env variables; which can then subsequently be consumed to drive an app to make decisions on how to bootstrap itself, what configs to load etc. *(see `meta-variable substitution` below)*
 
 In short, the above concepts may or may not work for you, but have proved to be a useful set of conventions used in the real world and has worked pretty well.
