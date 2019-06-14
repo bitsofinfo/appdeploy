@@ -153,6 +153,7 @@ helm repo index repo/
 
 ```
 helm repo add bitsofinfo-appdeploy https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo
+helm repo update
 ```
 
 ```
