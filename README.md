@@ -33,7 +33,7 @@ As one would expect, an *environment* is something like `dev`, `qa`, `prod` or `
 Within an *environment*, one or more *contexts* can exist as a way to logically sub-divide applications within an *environment*. The loose rule is that all applications sharing the same *context* talk to one another or similar configuration sources/databases etc. *Contexts* permit a level of classification that applications can use to alter how they bootup, configs they load etc. within an *environment*. The name of a *context* generally includes the *environment* implicit in its name (i.e. `qa-silo1`)
 
 ### classifier
-Sometimes an application artifact may operate in different *modes*, these different modes may enable or disable certain aspects of standard functionality provided by the artifact; such as the availability or lack thereof certain exposed APIs or ports.
+Sometimes an application artifact may operate in different *modes*, these different modes may enable or disable certain aspects of standard functionality provided by the artifact; such as the availability or lack thereof certain exposed APIs or ports. In these cases the *classifier* can simply act as a naming decoration to help identify this.
 
 ---
 
