@@ -16,6 +16,7 @@ Add to your local `/etc/hosts` (unless you have DNS setup)
 Next, lets ensure the Helm repo exists on your machine:
 ```
 helm repo add bitsofinfo-appdeploy https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo
+helm repo update
 ```
 
 Lets deploy a dummy app using the chart!
