@@ -120,7 +120,7 @@ of `appdeploy` as follows:
 ```
 my-own-chart-property1: "some value"
 
-# Specify value customizations for the basicapp dependency
+# Specify value customizations for the 'appdeploy' dependency
 # To override the values of "sub-charts" you have to scope them
 # as follows:
 # https://github.com/helm/helm/blob/master/docs/chart_template_guide/subcharts_and_globals.md
