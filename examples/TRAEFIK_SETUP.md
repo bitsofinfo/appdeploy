@@ -1,4 +1,4 @@
-# Traefik IngressController setup for examples
+# Traefik Ingress Controller setup for examples
 
 Lets get a [Traefik Ingress Controller Deployed](https://github.com/helm/charts/tree/master/stable/traefik).
 
@@ -21,7 +21,9 @@ Label the Traefik dashboard Ingress w/ `bitsofinfo-ingress=yes` so it will be re
 kubectl label ingress -n kube-system bitsofinfo-traefik-dashboard bitsofinfo-ingress=yes
 ```
 
-You have a host entry (or legit DNS) setup for the `LoadBalancer` for the installed Traefik Ingress Controller `Service` above
+You have a host entry (or legit DNS) setup for the `LoadBalancer` for the installed Traefik Ingress Controller `Service` above.
+
+*NOTE! since the Traefik chart deploys a `Service` of type `LoadBalancer` for the Ingress Controller, you need to be deploying to a Kubernetes cluster that supports provisioning some sort of `LoadBalancer`. If your target k8s cluster does NOT support `LoadBalancer` types, such as Minikube, then you can install something like [akrobateo](https://github.com/kontena/akrobateo) which will give you a psuedo load balancer capability on platforms like Minikube: https://github.com/kontena/akrobateo*
 ```
 kubectl get services -n kube-system | grep bitsofinfo-traefik
 ```
