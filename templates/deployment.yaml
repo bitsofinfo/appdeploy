@@ -1,4 +1,4 @@
-{{- /* ---------------------------------------------------------------
+  {{- /* ---------------------------------------------------------------
       REQUIRED ITEMS
       Note these are vars that have no default value in values.yaml
 ---------------------------------------------------------------------- */ -}}
@@ -657,7 +657,7 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: {{ .fullAppIdentifier }}
+          serviceName: {{ .targetServiceIdentifier }}
           servicePort: {{ .containerPort.port }}
 {{ end -}}
 
@@ -672,9 +672,11 @@ spec:
 {{ $creatorId := .Values.creatorId }}
 {{ $helmRoot := . }}
 {{ $hooks := .Values.hooks }}
+{{ $aliases := .Values.aliases }}
+{{ $app := .Values.app }}
 
 {{- range $containerPort := .Values.containerPorts }}
-  {{ $ingressTemplateArgs := dict "stdlabelsargs" $stdlabelsargs "imageTag" $imageTag "releaseNamespace" $releaseNamespace "fullAppIdentifier" $fullAppIdentifier "containerPort" $containerPort "ingress" $ingress "hooks" $hooks "creatorId" $creatorId "helmRoot" $helmRoot }}
+  {{ $ingressTemplateArgs := dict "stdlabelsargs" $stdlabelsargs "imageTag" $imageTag "releaseNamespace" $releaseNamespace "fullAppIdentifier" $fullAppIdentifier "targetServiceIdentifier" $fullAppIdentifier "containerPort" $containerPort "ingress" $ingress "hooks" $hooks "creatorId" $creatorId "helmRoot" $helmRoot }}
   {{- if and $containerPort.ingress $containerPort.service }}
 
     {{- /* -----------------------------------------------
@@ -686,6 +688,13 @@ spec:
       {{- if has $appClassifier $containerPort.classifiers }}
 {{ template "ingress.template" $ingressTemplateArgs }}
 {{ template "healthcheck.hook" $ingressTemplateArgs }}
+
+        {{- /* FOR EACH ALIAS, we alter the 'fullAppIdentifier' key of the args
+               and then render a new ingress w/ the alias as the name/fqdn/host */}}
+        {{ range $alias := $aliases }}
+          {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "fullAppIdentifier" ($fullAppIdentifier | replace $app.name $alias) }}
+{{ template "ingress.template" $aliasedIngressTemplateArgs }}
+        {{ end }}
       {{ end }}
 
     {{- /* -----------------------------------------------
@@ -694,6 +703,14 @@ spec:
     {{ else }}
 {{ template "ingress.template" $ingressTemplateArgs }}
 {{ template "healthcheck.hook" $ingressTemplateArgs }}
+
+      {{- /* FOR EACH ALIAS, we alter the 'fullAppIdentifier' key of the args
+             and then render a new ingress w/ the alias as the name/fqdn/host */}}
+      {{ range $alias := $aliases }}
+        {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "fullAppIdentifier" ($fullAppIdentifier | replace $app.name $alias) }}
+{{ template "ingress.template" $aliasedIngressTemplateArgs }}
+      {{ end }}
+
     {{ end }}
   {{ end }}
 {{ end }}

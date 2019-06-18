@@ -23,14 +23,18 @@ Lets deploy a dummy app using the chart!
 ```
 helm install \
   --debug \
+  --dry-run \
   --namespace bitsofinfo-apps \
   --name myapp-1.0 \
-  bitsofinfo-appdeploy/appdeploy --version 1.0.1 \
+  . \
   --set image.repository="nginx" \
   --set image.tag="latest" \
   --set app.name="myapp" \
   --set app.environment="stage" \
   --set app.context="stage-context1" \
+  --set aliases[0]="myapp-alias1" \
+  --set aliases[1]="myappalias2" \
+  --set aliases[2]="otheralias3" \
   --set containerPorts[0].service=true \
   --set containerPorts[0].port=80 \
   --set containerPorts[0].port=80 \
@@ -75,7 +79,11 @@ You should see a notification in the https://bitsofinfo.slack.com `#bitsofinfo-d
 
 Check traefik dashboard: https://bitsofinfo-traefik.test.local/dashboard/ to see the deployed backend
 
-Hit the actual deployed artifact: http://myapp-stage-context1-latest-80.local (assuming you have DNS setup) You should get a NGINX welcome page
+Hit the actual deployed artifact at: (assuming you have DNS setup) You should get a NGINX welcome page
+* http://myapp-stage-context1-latest-80.local
+* http://myapp-alias1-stage-context1-latest-80.local
+* http://myappalias2-stage-context1-latest-80.local
+* http://otheralias3-stage-context1-latest-80.local
 
 
 Cleanup:
