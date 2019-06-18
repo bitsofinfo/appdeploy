@@ -160,6 +160,6 @@ helm repo update
 # requirements.yaml
 dependencies:
 - name: appdeploy
-  version: "1.0.1"
+  version: "1.0.2"
   repository: "https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo"
 ```
