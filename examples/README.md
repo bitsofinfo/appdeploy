@@ -25,7 +25,7 @@ helm install \
   --debug \
   --namespace bitsofinfo-apps \
   --name myapp-1.0 \
-  bitsofinfo/appdeploy --version 1.1.0 \
+  bitsofinfo-appdeploy/appdeploy --version 1.1.0 \
   --set image.repository="nginx" \
   --set image.tag="latest" \
   --set app.name="myapp" \
