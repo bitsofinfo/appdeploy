@@ -3,16 +3,16 @@ entries:
   appdeploy:
   - apiVersion: v1
     appVersion: "1.0"
-    created: 2019-06-19T14:05:30.128995-06:00
+    created: 2019-06-19T14:18:08.651395-06:00
     description: Chart for deploying version specific artifacts
-    digest: f8b8ebb89e6686fbff0c2b592f3971570eedc60383287c6a18c86f273e45645d
+    digest: 786cdf4a7652d02c2acc6d13345067cd4cf4a28f79375c3b85765a1882bdff79
     name: appdeploy
     urls:
     - charts/appdeploy-1.1.0.tgz
     version: 1.1.0
   - apiVersion: v1
     appVersion: "1.0"
-    created: 2019-06-19T14:05:30.128418-06:00
+    created: 2019-06-19T14:18:08.649993-06:00
     description: Chart for deploying version specific artifacts
     digest: 1c18df4b569c0a5ec5a04dca4d62b2e3227da5cfde796ba09337ef119d83f14b
     name: appdeploy
@@ -21,7 +21,7 @@ entries:
     version: 1.0.2
   - apiVersion: v1
     appVersion: "1.0"
-    created: 2019-06-19T14:05:30.127349-06:00
+    created: 2019-06-19T14:18:08.648398-06:00
     description: Chart for deploying version specific artifacts
     digest: 65c106a9dbc0af717ce27c30a6c49d52027a2b716336c89c09893b58808ba21f
     name: appdeploy
@@ -30,11 +30,11 @@ entries:
     version: 1.0.1
   - apiVersion: v1
     appVersion: "1.0"
-    created: 2019-06-19T14:05:30.126246-06:00
+    created: 2019-06-19T14:18:08.64637-06:00
     description: Chart for deploying version specific artifacts
     digest: fcfe4404906e1758fd44301d270424a4e8d2addc4bef3627838ebb55e595f7a5
     name: appdeploy
     urls:
     - charts/appdeploy-1.0.0.tgz
     version: 1.0.0
-generated: 2019-06-19T14:05:30.123944-06:00
+generated: 2019-06-19T14:18:08.643323-06:00

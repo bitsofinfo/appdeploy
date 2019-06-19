@@ -394,7 +394,7 @@ spec:
 ------------------------------------------ */}}
   {{ if .root.Values.hooks.default.postInstallUpgrade.validator.enabled }}
 
-  {{ $hookObjectName := printf "%s-%s-postdeploy-validator" .objectIdentifier .containerPort.port | replace "-" "" }}
+  {{ $hookObjectName := printf "%s-%s-postdeploy-validator" .objectIdentifier (.containerPort.port | toString) | replace "-" "" }}
 ---
 
 apiVersion: v1
@@ -486,7 +486,7 @@ spec:
 ------------------------------------------ */}}
   {{ if .root.Values.hooks.default.postDelete.validator.enabled }}
 
-    {{ $hookObjectName := printf "%s-%s-postdelete-validator" .objectIdentifier .containerPort.port | replace "-" "" }}
+    {{ $hookObjectName := printf "%s-%s-postdelete-validator" .objectIdentifier (.containerPort.port | toString) | replace "-" "" }}
 ---
 apiVersion: v1
 kind: ConfigMap
