@@ -1,3 +1,13 @@
+# 1.1.0
+* Breaking change release
+* `meta-variables` (i.e. `[[#varname]]`) are gone and just replaced with Helm `tpl` function calls where `values` (on certain keys) are just parsed as real templates, the entire `[[#varname]]` syntax is gone
+* Breaking changes in `values.yaml`
+  * `hooks.postInstallUpgrade` is now `hooks.default.postInstallUpgrade.validator`
+  * `hooks.postDelete` is now `hooks.default.postDelete.validator`
+* Added `app.shortName` for `app.name` that are too long. (defaults to `{{.Values.app.name}}`)
+* Added a hashId of fullAppIdentifier to all generated objects as label
+* General cleanup and refactoring
+
 # 1.0.2
 * Generate `Ingress` for each alias in `aliases`
 

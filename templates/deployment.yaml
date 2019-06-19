@@ -2,29 +2,33 @@
       REQUIRED ITEMS
       Note these are vars that have no default value in values.yaml
 ---------------------------------------------------------------------- */ -}}
-{{ $imageRepository := required "image.repository is REQUIRED!" .Values.image.repository }}
-{{ $imageTag := required "image.tag is REQUIRED!" .Values.image.tag }}
-{{ $appName := required "app.name is REQUIRED!" .Values.app.name }}
-{{ $appContext := required "app.context is REQUIRED!" .Values.app.context }}
-{{ $appEnvironment := required "app.environment is REQUIRED!" .Values.app.environment }}
-{{ $dummyCheck := required "healthcheck.liveness.containerPort is REQUIRED!" .Values.healthcheck.liveness.containerPort }}
-{{ $dummyCheck := required "healthcheck.readiness.containerPort is REQUIRED!" .Values.healthcheck.readiness.containerPort }}
+{{ $_ := required "image.repository is REQUIRED!" .Values.image.repository }}
+{{ $_ := required "image.tag is REQUIRED!" .Values.image.tag }}
+{{ $_ := required "app.name is REQUIRED!" .Values.app.name }}
+{{ $_ := required "app.context is REQUIRED!" .Values.app.context }}
+{{ $_ := required "app.environment is REQUIRED!" .Values.app.environment }}
+{{ $_ := required "healthcheck.liveness.containerPort is REQUIRED!" .Values.healthcheck.liveness.containerPort }}
+{{ $_ := required "healthcheck.readiness.containerPort is REQUIRED!" .Values.healthcheck.readiness.containerPort }}
 
 {{ if .Values.bootstrapSecret.enabled }}
-  {{ $dummyCheck := required "bootstrapSecret.k8Secret.secretValue is REQUIRED!" .Values.bootstrapSecret.k8Secret.secretValue }}
+  {{ $_ := required "bootstrapSecret.k8Secret.secretValue is REQUIRED!" .Values.bootstrapSecret.k8Secret.secretValue }}
 {{- end }}
 
 {{- /* ---------------------------------------------------------------
       VARIABLE/SETUP Auto Generated vars
 ---------------------------------------------------------------------- */}}
-{{- $bootstrapSecretFilePath := printf "%s/%s" .Values.bootstrapSecret.mount.path .Values.bootstrapSecret.mount.fileName -}}
-{{- $imageTag := .Values.image.tag -}}
-{{- $k8sSafeName_imageTag := .Values.image.tag | replace "." "-" -}}
-{{- $releaseNamespace := .Release.Namespace -}}
-{{- $appClassifier := .Values.app.classifier -}}
-{{- $serviceAccount := .Values.serviceAccount -}}
-{{- $serviceAccountName := $serviceAccount.name -}}
+{{- $_ := set . "bootstrapSecretFilePath" (printf "%s/%s" .Values.bootstrapSecret.mount.path .Values.bootstrapSecret.mount.fileName) -}}
+{{- $_ := set . "k8sSafeName_imageTag" (.Values.image.tag | replace "." "-") -}}
 
+
+{{- define "shortener.tpl" }}
+{{- $full :=  . -}}
+{{- $short :=  $full | replace "-" "_" | replace "." "_" | camelcase -}}
+{{- $hash :=  $full | adler32sum -}}
+{{- $final :=  (gt (len $full) 63) | ternary $short $full -}}
+{{- $final :=  (gt (len $final) 63) | ternary $hash $final -}}
+{{- $final -}}
+{{- end }}
 
 {{- /* ---------------------------------------------------------------
 
@@ -35,52 +39,54 @@
  helm uses http://masterminds.github.io/sprig under the covers nicely.
 
 --------------------------------------------------------------- */}}
-{{- $fullAppIdentifier := printf "%s-%s-%s-%sREMOVEME" .Values.app.name .Values.app.context $k8sSafeName_imageTag .Values.app.classifier -}}
-{{- $fullAppIdentifier := $fullAppIdentifier | replace "-REMOVEME" "" -}}
-{{- $fullAppIdentifier := $fullAppIdentifier | replace "REMOVEME" "" -}}
-{{- $fullAppIdentifier := $fullAppIdentifier | replace "-%!s(<nil>)" "" -}}
+{{- $tmpFullAppId := printf "%s-%s-%s-%sREMOVEME" (tpl .Values.app.shortName .) .Values.app.context .k8sSafeName_imageTag .Values.app.classifier -}}
+{{- $tmpFullAppId := $tmpFullAppId | replace "-REMOVEME" "" -}}
+{{- $tmpFullAppId := $tmpFullAppId | replace "REMOVEME" "" -}}
+{{- $tmpFullAppId := $tmpFullAppId | replace "-%!s(<nil>)" "" -}}
+{{ $_ :=  set . "fullAppIdentifier_full" $tmpFullAppId }}
+{{ $_ :=  set . "fullAppIdentifier_short" ($tmpFullAppId | replace "-" "_" | replace "." "_" | camelcase) }}
+{{ $_ :=  set . "fullAppIdentifier_hash" ($tmpFullAppId | adler32sum) }}
+{{ $_ :=  set . "fullAppIdentifier" ((gt (len .fullAppIdentifier_full) 63) | ternary .fullAppIdentifier_short .fullAppIdentifier_full)}}
+{{ $_ :=  set . "fullAppIdentifier" ((gt (len .fullAppIdentifier) 63) | ternary (printf "%s-%s-%s" .Values.app.name .Values.app.context .fullAppIdentifier_hash) .fullAppIdentifier)}}
 
 
 {{- /* ---------------------------------------------------------------
       bootstrapSecretName
 --------------------------------------------------------------- */}}
-{{- $bootstrapSecretName := printf "bootstrapsecret-%s" $fullAppIdentifier -}}
+{{- $_ := set . "bootstrapSecretName" (printf "bootstrapsecret-%s" .fullAppIdentifier) -}}
 
 
 {{- /* ---------------------------------------------------------------
   serviceAccountName
 --------------------------------------------------------------- */}}
-{{- $serviceAccountName := $serviceAccountName | replace "[[#app.name]]" $appName -}}
-{{- $serviceAccountName := $serviceAccountName | replace "[[#app.context]]" $appContext -}}
-{{- $serviceAccountName := $serviceAccountName | replace "[[#app.environment]]" $appEnvironment -}}
-{{- $serviceAccountName := $serviceAccountName | replace "[[#image.tag]]" $imageTag -}}
-{{- $serviceAccountName := $serviceAccountName | replace "[[#namespace]]" $releaseNamespace }}
-{{- $serviceAccountName := $serviceAccountName | replace "[[#app.classifier]]" $appClassifier }}
-{{- $serviceAccountName := $serviceAccountName | replace "[[#fullAppIdentifier]]" $fullAppIdentifier }}
+{{- $_ := set . "serviceAccountName" (tpl .Values.serviceAccount.name .) -}}
 
 
 {{- /* ---------------------------------------------------------------
       Standard Labels TEMPLATE
       Usage {{ include "stdlabels.tpl" $stdlabelsargs | indent N }}
 --------------------------------------------------------------- */}}
-{{ $stdlabelsargs := dict "values" .Values "chart" .Chart "release" .Release "imageTag" $imageTag "fullAppIdentifier" $fullAppIdentifier }}
+{{- $_ := set . "stdlabelsargs" (dict "root" $) }}
+
 {{- define "stdlabels.tpl" }}
-"{{ .values.labelNames.appName }}": {{ .values.app.name }}
-"{{ .values.labelNames.appContext }}": {{ .values.app.context }}
-"{{ .values.labelNames.appEnvironment }}": {{ .values.app.environment }}
-"{{ .values.labelNames.appVersion }}": {{ .imageTag }}
-{{ if .values.app.classifier }}
-"{{ .values.labelNames.appClassifier }}": {{ .values.app.classifier }}
+"{{ .root.Values.labelNames.appName }}": {{ .root.Values.app.name }}
+"{{ .root.Values.labelNames.appContext }}": {{ .root.Values.app.context }}
+"{{ .root.Values.labelNames.appEnvironment }}": {{ .root.Values.app.environment }}
+"{{ .root.Values.labelNames.appVersion }}": {{ .root.Values.image.tag }}
+"{{ .root.Values.labelNames.hashId }}": "{{ .root.fullAppIdentifier_hash }}"
+{{ if .root.Values.app.classifier }}
+"{{ .root.Values.labelNames.appClassifier }}": {{ .root.Values.app.classifier }}
 {{ end }}
-"{{ .values.labelNames.creatorId }}": "{{ .values.creatorId | replace "@" "_" }}"
-"app.kubernetes.io/name": {{ .values.app.name }}
-"app.kubernetes.io/managed-by": {{ .release.Service }}
-"app.kubernetes.io/instance": {{ .fullAppIdentifier }}
-"app.kubernetes.io/version": {{ .imageTag }}
-"app.kubernetes.io/part-of": {{ .values.app.name }}
+"{{ .root.Values.labelNames.creatorId }}": "{{ .root.Values.creatorId | replace "@" "_" }}"
+"app.kubernetes.io/name": {{ .root.Values.app.name }}
+"app.kubernetes.io/managed-by": {{ .root.Release.Service }}
+"app.kubernetes.io/instance": {{ .root.fullAppIdentifier }}
+"app.kubernetes.io/version": {{ .root.Values.image.tag }}
+"app.kubernetes.io/part-of": {{ .root.Values.app.name }}
 "app.kubernetes.io/component": "app"
-"helm.sh/chart": {{ .chart.Name }}-{{ .chart.Version }}
+"helm.sh/chart": {{ .root.Chart.Name }}-{{ .root.Chart.Version }}
 {{- end }}
+
 
 
 
@@ -93,34 +99,34 @@
 {{- if .Values.serviceAccount.create }}
 
 
-{{ $serviceAccountNamespace := $serviceAccount.namespace | replace "[[#namespace]]" $releaseNamespace }}
+{{ $serviceAccountNamespace := tpl .Values.serviceAccount.namespace . }}
 
 ---
 
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ $serviceAccountName }}
+  name: {{ $.serviceAccountName }}
   namespace: {{ $serviceAccountNamespace }}
 
 ---
 
-kind: {{ $serviceAccount.kind }}
+kind: {{ $.Values.serviceAccount.kind }}
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   namespace: {{ $serviceAccountNamespace }}
-  name: {{ $serviceAccountName }}
+  name: {{ $.serviceAccountName }}
 rules:
 - apiGroups:
-  {{ range $apigroup := $serviceAccount.apiGroups }}
+  {{ range $apigroup := $.Values.serviceAccount.apiGroups }}
     - "{{ $apigroup }}"
   {{ end }}
   resources:
-  {{ range $resource := $serviceAccount.resources }}
+  {{ range $resource := $.Values.serviceAccount.resources }}
     - "{{ $resource }}"
   {{ end }}
   verbs:
-  {{ range $verb := $serviceAccount.verbs }}
+  {{ range $verb := $.Values.serviceAccount.verbs }}
     - "{{ $verb }}"
   {{ end }}
 
@@ -128,18 +134,18 @@ rules:
 
 # ClusterRoleBinding | RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
-kind: {{ (eq $serviceAccount.kind "ClusterRole") | ternary "ClusterRoleBinding" "RoleBinding" }}
+kind: {{ (eq $.Values.serviceAccount.kind "ClusterRole") | ternary "ClusterRoleBinding" "RoleBinding" }}
 metadata:
-  name: {{ $serviceAccountName }}
+  name: {{ $.serviceAccountName }}
   namespace: {{ $serviceAccountNamespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ $serviceAccountName }}
+  name: {{ $.serviceAccountName }}
   namespace: {{ $serviceAccountNamespace }}
 subjects:
 - kind: ServiceAccount
-  name: {{ $serviceAccountName }}
+  name: {{ $.serviceAccountName }}
   namespace: {{ $serviceAccountNamespace }}
 
 {{ end }}
@@ -157,9 +163,9 @@ apiVersion: v1
 kind: Secret
 metadata:
   namespace: {{ .Release.Namespace }}
-  name: {{ $bootstrapSecretName }}
+  name: {{ $.bootstrapSecretName }}
   labels:
-    {{ include "stdlabels.tpl" $stdlabelsargs | indent 4 }}
+    {{ include "stdlabels.tpl" $.stdlabelsargs | indent 4 }}
 type: Opaque
 stringData:
   {{ .Values.bootstrapSecret.k8Secret.valueKey }}: {{ .Values.bootstrapSecret.k8Secret.secretValue }}
@@ -172,10 +178,10 @@ stringData:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: {{ $releaseNamespace }}
-  name: {{ $fullAppIdentifier }}
+  namespace: {{ .Release.Namespace }}
+  name: {{ $.fullAppIdentifier }}
   labels:
-    {{ include "stdlabels.tpl" $stdlabelsargs | indent 4 }}
+    {{ include "stdlabels.tpl" $.stdlabelsargs | indent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -183,7 +189,7 @@ spec:
       "{{ .Values.labelNames.appName }}": {{ .Values.app.name }}
       "{{ .Values.labelNames.appContext }}": {{ .Values.app.context }}
       "{{ .Values.labelNames.appEnvironment }}": {{ .Values.app.environment }}
-      "{{ .Values.labelNames.appVersion }}": {{ $imageTag }}
+      "{{ .Values.labelNames.appVersion }}": {{ .Values.image.tag }}
       {{ if .Values.app.classifier }}
       "{{ .Values.labelNames.appClassifier }}": {{ .Values.app.classifier }}
       {{ end }}
@@ -193,31 +199,23 @@ spec:
         "{{ .Values.labelNames.appName }}": {{ .Values.app.name }}
         "{{ .Values.labelNames.appContext }}": {{ .Values.app.context }}
         "{{ .Values.labelNames.appEnvironment }}": {{ .Values.app.environment }}
-        "{{ .Values.labelNames.appVersion }}": {{ $imageTag }}
+        "{{ .Values.labelNames.appVersion }}": {{ .Values.image.tag }}
         {{ if .Values.app.classifier }}
         "{{ .Values.labelNames.appClassifier }}": {{ .Values.app.classifier }}
         {{ end }}
         "{{ .Values.labelNames.creatorId }}": "{{ .Values.creatorId | replace "@" "_" }}"
         {{- range $label := .Values.deployment.template.labels }}
-          {{- $labelValue := $label.value }}
-          {{- $labelValue := $labelValue | replace "[[#app.name]]" $appName -}}
-          {{- $labelValue := $labelValue | replace "[[#app.context]]" $appContext -}}
-          {{- $labelValue := $labelValue | replace "[[#app.environment]]" $appEnvironment -}}
-          {{- $labelValue := $labelValue | replace "[[#image.tag]]" $imageTag -}}
-          {{- $labelValue := $labelValue | replace "[[#namespace]]" $releaseNamespace }}
-          {{- $labelValue := $labelValue | replace "[[#app.classifier]]" $appClassifier }}
-          {{- $labelValue := $labelValue | replace "[[#fullAppIdentifier]]" $fullAppIdentifier }}
-        "{{ $label.name }}": "{{ $labelValue }}"
+        "{{ $label.name }}": "{{ tpl $label.value $ }}"
         {{- end }}
         "app.kubernetes.io/name": {{ .Values.app.name }}
         "app.kubernetes.io/managed-by": {{ .Release.Service }}
-        "app.kubernetes.io/instance": {{ $fullAppIdentifier }}
-        "app.kubernetes.io/version": {{ $imageTag }}
+        "app.kubernetes.io/instance": {{ $.fullAppIdentifier }}
+        "app.kubernetes.io/version": {{ $.Values.image.tag }}
         "app.kubernetes.io/part-of": {{ .Values.app.name }}
         "app.kubernetes.io/component": "app"
         "helm.sh/chart": {{ .Chart.Name }}-{{ .Chart.Version }}
     spec:
-      serviceAccountName: {{ $serviceAccountName }}
+      serviceAccountName: {{ $.serviceAccountName }}
       {{ if hasKey .Values "imagePullSecrets" }}
       imagePullSecrets:
         {{ range $secretName := .Values.imagePullSecrets }}
@@ -228,7 +226,7 @@ spec:
         {{ if .Values.bootstrapSecret.enabled }}
         - name: bootstrap-secret-volume
           secret:
-            secretName: {{ $bootstrapSecretName }}
+            secretName: {{ $.bootstrapSecretName }}
             defaultMode: 256
             items:
               - key: {{ .Values.bootstrapSecret.k8Secret.valueKey }}
@@ -256,7 +254,7 @@ spec:
           ports:
             {{- range $containerPort := .Values.containerPorts }}
               {{- if $containerPort.classifiers }}
-                {{- if has $appClassifier $containerPort.classifiers }}
+                {{- if has $.Values.app.classifier $containerPort.classifiers }}
             - containerPort: {{ $containerPort.port }}
                 {{- end }}
               {{- else }}
@@ -301,16 +299,7 @@ spec:
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               {{- if and $value $value.value }}
-                {{- $val := $value.value }}
-                {{- $val := $val | replace "[[#app.name]]" $appName -}}
-                {{- $val := $val | replace "[[#app.context]]" $appContext -}}
-                {{- $val := $val | replace "[[#app.environment]]" $appEnvironment -}}
-                {{- $val := $val | replace "[[#image.tag]]" $imageTag -}}
-                {{- $val := $val | replace "[[#namespace]]" $releaseNamespace }}
-                {{- $val := $val | replace "[[#app.classifier]]" $appClassifier }}
-                {{- $val := $val | replace "[[#fullAppIdentifier]]" $fullAppIdentifier }}
-                {{- $val := $val | replace "[[#bootstrapSecretFilePath]]" $bootstrapSecretFilePath }}
-              value: "{{ $val }}"
+              value: "{{ tpl $value.value $ }}"
               {{ else }}
               value: ""
               {{- end -}}
@@ -322,39 +311,15 @@ spec:
           {{ if .Values.command.args }}
           args:
             {{- range $arg := .Values.command.preArgs }}
-              {{- $arg := $arg | replace "[[#app.name]]" $appName -}}
-              {{- $arg := $arg | replace "[[#app.context]]" $appContext -}}
-              {{- $arg := $arg | replace "[[#app.environment]]" $appEnvironment -}}
-              {{- $arg := $arg | replace "[[#image.tag]]" $imageTag -}}
-              {{- $arg := $arg | replace "[[#namespace]]" $releaseNamespace }}
-              {{- $arg := $arg | replace "[[#app.classifier]]" $appClassifier }}
-              {{- $arg := $arg | replace "[[#bootstrapSecretFilePath]]" $bootstrapSecretFilePath }}
-              {{- $arg := $arg | replace "[[#fullAppIdentifier]]" $fullAppIdentifier }}
-            - "{{ $arg }}"
+            - "{{ tpl $arg $ }}"
             {{- end }}
 
             {{- range $arg := .Values.command.args }}
-              {{- $arg := $arg | replace "[[#app.name]]" $appName -}}
-              {{- $arg := $arg | replace "[[#app.context]]" $appContext -}}
-              {{- $arg := $arg | replace "[[#app.environment]]" $appEnvironment -}}
-              {{- $arg := $arg | replace "[[#image.tag]]" $imageTag -}}
-              {{- $arg := $arg | replace "[[#namespace]]" $releaseNamespace }}
-              {{- $arg := $arg | replace "[[#app.classifier]]" $appClassifier }}
-              {{- $arg := $arg | replace "[[#bootstrapSecretFilePath]]" $bootstrapSecretFilePath }}
-              {{- $arg := $arg | replace "[[#fullAppIdentifier]]" $fullAppIdentifier }}
-            - "{{ $arg }}"
+            - "{{ tpl $arg $ }}"
             {{- end }}
 
             {{- range $arg := .Values.command.postArgs }}
-              {{- $arg := $arg | replace "[[#app.name]]" $appName -}}
-              {{- $arg := $arg | replace "[[#app.context]]" $appContext -}}
-              {{- $arg := $arg | replace "[[#app.environment]]" $appEnvironment -}}
-              {{- $arg := $arg | replace "[[#image.tag]]" $imageTag -}}
-              {{- $arg := $arg | replace "[[#namespace]]" $releaseNamespace }}
-              {{- $arg := $arg | replace "[[#app.classifier]]" $appClassifier }}
-              {{- $arg := $arg | replace "[[#bootstrapSecretFilePath]]" $bootstrapSecretFilePath }}
-              {{- $arg := $arg | replace "[[#fullAppIdentifier]]" $fullAppIdentifier }}
-            - "{{ $arg }}"
+            - "{{ tpl $arg $ }}"
             {{- end }}
           {{- end }}
           {{- end }}
@@ -367,28 +332,20 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: "{{ $releaseNamespace }}"
-  name: "{{ $fullAppIdentifier }}"
+  namespace: "{{ $.Release.Namespace }}"
+  name: "{{ $.fullAppIdentifier }}"
   labels:
-    {{ include "stdlabels.tpl" $stdlabelsargs | indent 4 }}
+    {{ include "stdlabels.tpl" $.stdlabelsargs | indent 4 }}
 
     {{- range $label := .Values.service.labels }}
-      {{- $labelValue := $label.value }}
-      {{- $labelValue := $labelValue | replace "[[#app.name]]" $appName -}}
-      {{- $labelValue := $labelValue | replace "[[#app.context]]" $appContext -}}
-      {{- $labelValue := $labelValue | replace "[[#app.environment]]" $appEnvironment -}}
-      {{- $labelValue := $labelValue | replace "[[#image.tag]]" $imageTag -}}
-      {{- $labelValue := $labelValue | replace "[[#namespace]]" $releaseNamespace }}
-      {{- $labelValue := $labelValue | replace "[[#app.classifier]]" $appClassifier }}
-      {{- $labelValue := $labelValue | replace "[[#fullAppIdentifier]]" $fullAppIdentifier }}
-    "{{ $label.name }}": "{{ $labelValue }}"
+    "{{ $label.name }}": "{{ tpl $label.value $ }}"
     {{- end }}
 spec:
   selector:
     "{{ .Values.labelNames.appName }}": {{ .Values.app.name }}
     "{{ .Values.labelNames.appContext }}": {{ .Values.app.context }}
     "{{ .Values.labelNames.appEnvironment }}": {{ .Values.app.environment }}
-    "{{ .Values.labelNames.appVersion }}": {{ $imageTag }}
+    "{{ .Values.labelNames.appVersion }}": {{ .Values.image.tag }}
     {{ if .Values.app.classifier }}
     "{{ .Values.labelNames.appClassifier }}": {{ .Values.app.classifier }}
     {{ end }}
@@ -397,7 +354,7 @@ spec:
   {{- range $containerPort := .Values.containerPorts }}
     {{- if $containerPort.service }}
       {{- if $containerPort.classifiers }}
-        {{- if has $appClassifier $containerPort.classifiers }}
+        {{- if has $.Values.app.classifier $containerPort.classifiers }}
   - protocol: TCP
     name: {{ $containerPort.name }}
     port: {{ $containerPort.port }}
@@ -414,12 +371,20 @@ spec:
 
 
 
+
+
+
 {{- /* ---------------------------------------------------------------
-      Helm Hooks
+      default.validator.hooks (templates)
       What follows defines a embedded golang template
       that is invoked later at bottom of this file
+
+      arg dict:
+        "root" = $
+        "objectIdentifier" = create all objects with this "name"
+        "containerPort" = containerPort the igress is for
 ---------------------------------------------------------------------- */}}
-{{- define "healthcheck.hook" }}
+{{- define "default.validator.hooks" }}
 
 {{/* -------------------------------------
      HOOK Support: POST INSTALL UPGRADE ConfigMap
@@ -427,20 +392,23 @@ spec:
     here for the Job to consume, technically
     not a Hook due to lack of annotation)
 ------------------------------------------ */}}
-  {{ if .hooks.postInstallUpgrade.enabled }}
+  {{ if .root.Values.hooks.default.postInstallUpgrade.validator.enabled }}
+
+  {{ $hookObjectName := printf "%s-%s-postdeploy-validator" .objectIdentifier .containerPort.port | replace "-" "" }}
 ---
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeploycheck-config
-  namespace: "{{ .releaseNamespace }}"
+  name: {{ $hookObjectName }}
+  namespace: "{{ .root.Release.Namespace }}"
   labels:
-    {{ include "stdlabels.tpl" .stdlabelsargs | indent 4 }}
+    {{ include "stdlabels.tpl" .root.stdlabelsargs | indent 4 }}
 data:
   healthchecks.config.yaml: |
-{{ toYaml .hooks.postInstallUpgrade.checksConfig | indent 4 }}
+{{ toYaml .root.Values.hooks.default.postInstallUpgrade.validator.checksConfig | indent 4 }}
   slackalerts.config.yaml: |
-{{ toYaml .hooks.postInstallUpgrade.slackConfig | indent 4 }}
+{{ toYaml .root.Values.hooks.default.postInstallUpgrade.validator.slackConfig | indent 4 }}
 
 {{/* -------------------------------------
      HOOK: POST INSTALL/UPGRADE Job
@@ -450,59 +418,59 @@ data:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeploycheck"
-  namespace: "{{ .releaseNamespace }}"
+  name: "{{ $hookObjectName }}"
+  namespace: "{{ .root.Release.Namespace }}"
   labels:
-    {{ include "stdlabels.tpl" .stdlabelsargs | indent 4 }}
+    {{ include "stdlabels.tpl" .root.stdlabelsargs | indent 4 }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "-5"
-    "helm.sh/hook-delete-policy": {{ .hooks.postInstallUpgrade.hookDeletePolicy }}
+    "helm.sh/hook-delete-policy": {{ .root.Values.hooks.default.postInstallUpgrade.validator.hookDeletePolicy }}
 spec:
   backoffLimit: 0 # retry 0 times
   activeDeadlineSeconds: 300 # max run for 10 minutes (i.e. inclusive of retries)
   template:
     metadata:
-      name: "{{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeploycheck"
+      name: "{{ $hookObjectName }}"
     spec:
       restartPolicy: Never
       volumes:
         - name: config-volume
           configMap:
-            name: {{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeploycheck-config
+            name: {{ $hookObjectName }}
       containers:
-        - name: {{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeploycheck
-          image: "{{ .hooks.postInstallUpgrade.image }}"
+        - name: {{ $hookObjectName }}
+          image: "{{ .root.Values.hooks.default.postInstallUpgrade.validator.image }}"
           command:
             - "checker.py"
           args:
             - "--check-name"
-            {{ if .hooks.postInstallUpgrade.useIngressHost }}
-            - "{{ printf "%s-%s%s" .fullAppIdentifier (.containerPort.port | toString) .ingress.dns.fqdnSuffix }}"
+            {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
+            - "{{ printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
-            - "{{ printf "%s.%s.svc.cluster.local:%s" .fullAppIdentifier .releaseNamespace (.containerPort.port | toString) }}"
+            - "{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
             - "--target-root-url"
-            {{ if .hooks.postInstallUpgrade.useIngressHost }}
-            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s" .fullAppIdentifier (.containerPort.port | toString) .ingress.dns.fqdnSuffix }}"
+            {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
+            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
-            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .fullAppIdentifier .releaseNamespace (.containerPort.port | toString) }}"
+            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
             - "--max-retries"
-            - "{{ .hooks.postInstallUpgrade.maxRetries }}"
+            - "{{ .root.Values.hooks.default.postInstallUpgrade.validator.maxRetries }}"
             - "--sleep-seconds"
-            - "{{ .hooks.postInstallUpgrade.sleepSeconds }}"
+            - "{{ .root.Values.hooks.default.postInstallUpgrade.validator.sleepSeconds }}"
             - "--any-check-fail-exit-code"
             - "1"
             - "--tags-qualifier"
             - "{{ .containerPort.port }}"
             - "--extra-slack-context-props"
-            - "creatorId={{ .creatorId }}"
+            - "creatorId={{ .root.Values.creatorId }}"
             - "--checksdb-filename"
             - "/etc/hc-config/healthchecks.config.yaml"
             - "--slack-config-filename"
             - "/etc/hc-config/slackalerts.config.yaml"
-            {{ if .hooks.postInstallUpgrade.debugOutput }}
+            {{ if .root.Values.hooks.default.postInstallUpgrade.validator.debugOutput }}
             - "--verbose-output"
             - "--debug-slack-jinja2-context"
             {{ end }}
@@ -516,24 +484,26 @@ spec:
 {{/* -------------------------------------
      HOOK Support: POST DELETE ConfigMap
 ------------------------------------------ */}}
-  {{ if .hooks.postDelete.enabled }}
+  {{ if .root.Values.hooks.default.postDelete.validator.enabled }}
+
+    {{ $hookObjectName := printf "%s-%s-postdelete-validator" .objectIdentifier .containerPort.port | replace "-" "" }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeletecheck-config
-  namespace: "{{ .releaseNamespace }}"
+  name: {{ $hookObjectName }}
+  namespace: "{{ .root.Release.Namespace }}"
   labels:
-    {{ include "stdlabels.tpl" .stdlabelsargs | indent 4 }}
+    {{ include "stdlabels.tpl" .root.stdlabelsargs | indent 4 }}
   annotations:
     "helm.sh/hook": post-delete
     "helm.sh/hook-weight": "0"
     "helm.sh/hook-delete-policy": hook-failed,before-hook-creation
 data:
   healthchecks.config.yaml: |
-{{ toYaml .hooks.postDelete.checksConfig | indent 4 }}
+{{ toYaml .root.Values.hooks.default.postDelete.validator.checksConfig | indent 4 }}
   slackalerts.config.yaml: |
-{{ toYaml .hooks.postDelete.slackConfig | indent 4 }}
+{{ toYaml .root.Values.hooks.default.postDelete.validator.slackConfig | indent 4 }}
 
 {{/* -------------------------------------
      HOOK: POST DELETE Job
@@ -544,57 +514,57 @@ data:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeletecheck"
-  namespace: "{{ .releaseNamespace }}"
+  name: "{{ $hookObjectName }}"
+  namespace: "{{ .root.Release.Namespace }}"
   labels:
-    {{ include "stdlabels.tpl" .stdlabelsargs | indent 4 }}
+    {{ include "stdlabels.tpl" .root.stdlabelsargs | indent 4 }}
   annotations:
     "helm.sh/hook": post-delete
     "helm.sh/hook-weight": "2"
-    "helm.sh/hook-delete-policy": {{ .hooks.postDelete.hookDeletePolicy }}
+    "helm.sh/hook-delete-policy": {{ .root.Values.hooks.default.postDelete.validator.hookDeletePolicy }}
 spec:
   backoffLimit: 0 # retry 0 times
   activeDeadlineSeconds: 300 # max run for 10 minutes (i.e. inclusive of retries)
   template:
     metadata:
-      name: "{{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeletecheck"
+      name: "{{ $hookObjectName }}"
     spec:
       restartPolicy: Never
       volumes:
         - name: config-volume
           configMap:
-            name: {{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeletecheck-config
+            name: {{ $hookObjectName }}
       containers:
-        - name: {{ .fullAppIdentifier }}-{{ .containerPort.port }}-postdeletecheck
-          image: "{{ .hooks.postDelete.image }}"
+        - name: {{ $hookObjectName }}
+          image: "{{ .root.Values.hooks.default.postDelete.validator.image }}"
           command:
             - "checker.py"
           args:
             - "--check-name"
-            {{ if .hooks.postInstallUpgrade.useIngressHost }}
-            - "{{ printf "%s-%s%s" .fullAppIdentifier (.containerPort.port | toString) .ingress.dns.fqdnSuffix }}"
+            {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
+            - "{{ printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
-            - "{{ printf "%s.%s.svc.cluster.local:%s" .fullAppIdentifier .releaseNamespace (.containerPort.port | toString) }}"
+            - "{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
             - "--target-root-url"
-            {{ if .hooks.postInstallUpgrade.useIngressHost }}
-            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s" .fullAppIdentifier (.containerPort.port | toString) .ingress.dns.fqdnSuffix }}"
+            {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
+            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
-            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .fullAppIdentifier .releaseNamespace (.containerPort.port | toString) }}"
+            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
             - "--max-retries"
-            - "{{ .hooks.postDelete.maxRetries }}"
+            - "{{ .root.Values.hooks.default.postDelete.validator.maxRetries }}"
             - "--sleep-seconds"
-            - "{{ .hooks.postDelete.sleepSeconds }}"
+            - "{{ .root.Values.hooks.default.postDelete.validator.sleepSeconds }}"
             - "--any-check-fail-exit-code"
             - "1"
             - "--extra-slack-context-props"
-            - "creatorId={{ .creatorId }}"
+            - "creatorId={{ .root.Values.creatorId }}"
             - "--checksdb-filename"
             - "/etc/hc-config/healthchecks.config.yaml"
             - "--slack-config-filename"
             - "/etc/hc-config/slackalerts.config.yaml"
-            {{ if .hooks.postDelete.debugOutput }}
+            {{ if .root.Values.hooks.default.postDelete.validator.debugOutput }}
             - "--verbose-output"
             - "--debug-slack-jinja2-context"
             {{ end }}
@@ -607,29 +577,37 @@ spec:
 
 
 
+
+
 {{- /* ---------------------------------------------------------------
       Version Specific Ingress Object template
 
       What follows defines a embedded golang template
       that is invoked later at bottom of this file
       One for each unique container port
+
+      arg dict:
+        "root" = $
+        "objectIdentifier" = create all objects with this "name"
+        "containerPort" = containerPort the igress is for
 ---------------------------------------------------------------------- */}}
 {{- define "ingress.template" }}
 
-{{- $ingressFqdn := printf "%s-%s%s" .fullAppIdentifier (.containerPort.port | toString) .ingress.dns.fqdnSuffix }}
+{{- $ingressFqdn := printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}
 ---
 # Version specific Ingress (one per port)
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  namespace: "{{ .releaseNamespace }}"
+  namespace: "{{ .root.Release.Namespace }}"
   name: "{{ $ingressFqdn }}"
   labels:
-    {{ include "stdlabels.tpl" .stdlabelsargs | indent 4 }}
+    {{ include "stdlabels.tpl" .root.stdlabelsargs | indent 4 }}
 
-    {{ if .ingress.metadata.labels }}
-      {{- range $label := .ingress.metadata.labels }}
-    "{{ $label.name }}": "{{ $label.value }}"
+    {{ if .root.Values.ingress.metadata.labels }}
+      {{- $root := .root }}
+      {{- range $label := .root.Values.ingress.metadata.labels }}
+    "{{ $label.name }}": "{{ tpl $label.value $root }}"
       {{- end }}
     {{ end }}
   annotations:
@@ -639,44 +617,42 @@ metadata:
     ingress.kubernetes.io/protocol: "http"
     {{ end }}
 
-    {{ if .ingress.metadata.annotations }}
-      {{- range $annotation := .ingress.metadata.annotations }}
-    "{{ $annotation.name }}": "{{ $annotation.value }}"
+    {{ if .root.Values.ingress.metadata.annotations }}
+      {{- $root := .root }}
+      {{- range $annotation := .root.Values.ingress.metadata.annotations }}
+    "{{ $annotation.name }}": "{{ tpl $annotation.value $root }}"
       {{- end }}
     {{ end }}
 
 spec:
-  {{ if .ingress.tls.enabled }}
+  {{ if .root.Values.ingress.tls.enabled }}
   tls:
   - hosts:
     - {{ $ingressFqdn }}
-    secretName: {{ .ingress.tls.secretName }}
+    secretName: {{ .root.Values.ingress.tls.secretName }}
   {{ end }}
   rules:
   - host: {{ $ingressFqdn }}
     http:
       paths:
       - backend:
-          serviceName: {{ .targetServiceIdentifier }}
+          serviceName: {{ .root.fullAppIdentifier }}
           servicePort: {{ .containerPort.port }}
 {{ end -}}
 
 
 
 
+
+
+
 {{- /* ---------------------------------------------------------------
       Version specific Ingress objects (one per port)
-      This also generates Hooks to test each url
+      This also generates the hooks.default (validators) to test each url
 ---------------------------------------------------------------------- */}}
-{{ $ingress := .Values.ingress }}
-{{ $creatorId := .Values.creatorId }}
-{{ $helmRoot := . }}
-{{ $hooks := .Values.hooks }}
-{{ $aliases := .Values.aliases }}
-{{ $app := .Values.app }}
 
 {{- range $containerPort := .Values.containerPorts }}
-  {{ $ingressTemplateArgs := dict "stdlabelsargs" $stdlabelsargs "imageTag" $imageTag "releaseNamespace" $releaseNamespace "fullAppIdentifier" $fullAppIdentifier "targetServiceIdentifier" $fullAppIdentifier "containerPort" $containerPort "ingress" $ingress "hooks" $hooks "creatorId" $creatorId "helmRoot" $helmRoot }}
+  {{ $ingressTemplateArgs := dict "root" $ "objectIdentifier" $.fullAppIdentifier "containerPort" $containerPort }}
   {{- if and $containerPort.ingress $containerPort.service }}
 
     {{- /* -----------------------------------------------
@@ -685,14 +661,14 @@ spec:
            and ingress/hook check for it
     ----------------------------------------------- */}}
     {{- if $containerPort.classifiers }}
-      {{- if has $appClassifier $containerPort.classifiers }}
+      {{- if has $.Values.app.classifier $containerPort.classifiers }}
 {{ template "ingress.template" $ingressTemplateArgs }}
-{{ template "healthcheck.hook" $ingressTemplateArgs }}
+{{ template "default.validator.hooks" $ingressTemplateArgs }}
 
-        {{- /* FOR EACH ALIAS, we alter the 'fullAppIdentifier' key of the args
+        {{- /* FOR EACH ALIAS, we alter the 'objectIdentifier' key of the args
                and then render a new ingress w/ the alias as the name/fqdn/host */}}
-        {{ range $alias := $aliases }}
-          {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "fullAppIdentifier" ($fullAppIdentifier | replace $app.name $alias) }}
+        {{ range $alias := $.Values.aliases }}
+          {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace $.Values.app.name $alias) }}
 {{ template "ingress.template" $aliasedIngressTemplateArgs }}
         {{ end }}
       {{ end }}
@@ -702,12 +678,12 @@ spec:
     ----------------------------------------------- */}}
     {{ else }}
 {{ template "ingress.template" $ingressTemplateArgs }}
-{{ template "healthcheck.hook" $ingressTemplateArgs }}
+{{ template "default.validator.hooks" $ingressTemplateArgs }}
 
-      {{- /* FOR EACH ALIAS, we alter the 'fullAppIdentifier' key of the args
+      {{- /* FOR EACH ALIAS, we alter the 'objectIdentifier' key of the args
              and then render a new ingress w/ the alias as the name/fqdn/host */}}
-      {{ range $alias := $aliases }}
-        {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "fullAppIdentifier" ($fullAppIdentifier | replace $app.name $alias) }}
+      {{ range $alias := $.Values.aliases }}
+        {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace $.Values.app.name $alias) }}
 {{ template "ingress.template" $aliasedIngressTemplateArgs }}
       {{ end }}
 

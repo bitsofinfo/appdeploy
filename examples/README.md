@@ -23,10 +23,9 @@ Lets deploy a dummy app using the chart!
 ```
 helm install \
   --debug \
-  --dry-run \
   --namespace bitsofinfo-apps \
   --name myapp-1.0 \
-  bitsofinfo-appdeploy/appdeploy --version 1.0.2 \
+  bitsofinfo/appdeploy --version 1.1.0 \
   --set image.repository="nginx" \
   --set image.tag="latest" \
   --set app.name="myapp" \
@@ -47,14 +46,14 @@ helm install \
   --set healthcheck.readiness.containerPort=80 \
   --set healthcheck.readiness.path=/ \
   --set healthcheck.readiness.scheme=HTTP \
-  --set hooks.postInstallUpgrade.checksConfig[0].path=/ \
-  --set hooks.postInstallUpgrade.checksConfig[0].name="/" \
-  --set hooks.postInstallUpgrade.checksConfig[0].method="GET" \
-  --set hooks.postInstallUpgrade.checksConfig[0].timeout=5 \
-  --set hooks.postInstallUpgrade.checksConfig[0].retries=15 \
-  --set-string hooks.postInstallUpgrade.checksConfig[0].tags[0]=80 \
-  --set hooks.postInstallUpgrade.useIngressHost=false \
-  --set hooks.postDelete.useIngressHost=false \
+  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].path=/ \
+  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].name="/" \
+  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].method="GET" \
+  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].timeout=5 \
+  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].retries=15 \
+  --set-string hooks.default.postInstallUpgrade.validator.checksConfig[0].tags[0]=80 \
+  --set hooks.default.postInstallUpgrade.validator.useIngressHost=false \
+  --set hooks.default.postDelete.validator.useIngressHost=false \
   --set ingress.metadata.annotations[0].name="my-external-dns" \
   --set ingress.metadata.annotations[0].value="enabled" \
   --set ingress.metadata.annotations[1].name="kubernetes.io/ingress.class" \
@@ -62,6 +61,7 @@ helm install \
   --set ingress.dns.fqdnSuffix=".local" \
   --set ingress.metadata.labels[0].name="bitsofinfo-ingress" \
   --set ingress.metadata.labels[0].value="yes"
+
 ```
 
 Wait for the install to complete:

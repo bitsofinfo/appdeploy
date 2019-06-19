@@ -18,6 +18,11 @@ app:
   # See containerPorts.[classifiers]
   classifier: ""
 
+  # REQUIRED: defaults to app.name, but you should tweak it if you run into
+  # k8s length errors. tpl variable substitution supported here. See README
+  shortName: "{{ .Values.app.name }}"
+
+
 
 # Basic Deployment image properties that are REQUIRED to be set
 image:
@@ -35,12 +40,13 @@ labelNames:
   appVersion: "app-version"
   appClassifier: "app-classifier"
   creatorId: "app-creator-id"
+  hashId: "app-hash-id"
 
 
-# meta-variable subsitution supported here. See README
+# tpl variable substitution supported here. See README
 env:
   #ENV_VAR_1:
-  # value: "something"
+  # value: "something" # PARSED by Helm 'tpl' function passed $
   #ENV_VAR_2:
   # value: "something"
 
@@ -58,7 +64,7 @@ creatorId: "unknown@bitsofinfo.appdeploy.chart"
 # The k8s ServiceAccount pods will run as
 # this is NOT the uid:gid the process rus as (see securityContext)
 serviceAccount:
-  name: "default" # meta-variable subsitution supported here. See README
+  name: "default" # tpl variable substitution supported here. See README, PARSED by Helm 'tpl' function passed $
   create: false
 
   # If create is TRUE; If you MUST define the following items
@@ -100,18 +106,18 @@ securityContext:
 # Deployment customization
 deployment:
   template:
-    # meta-variable subsitution supported in values here. See README
+    # tpl variable substitution supported in values here. See README
     labels: []
     #  - name: "label-name"
-    #    value: "label value"
+    #    value: "label value" # PARSED by Helm 'tpl' function passed $
 
 # Options to customize the generated version specific Service
 service:
   type: ClusterIP
-  # meta-variable subsitution supported in values here. See README
+  # tpl variable substitution supported in values here. See README
   labels: []
   #  - name: "label-name"
-  #    value: "label value"
+  #    value: "label value" # PARSED by Helm 'tpl' function passed $
 
 
 # Options to customize the generated version specific Ingresses (one per port)
@@ -127,12 +133,13 @@ ingress:
     enabled: false
     secretName: ""
   metadata:
+    # tpl variable substitution supported in values here. See README
     labels: []
     #  - name: "label-name"
-    #    value: "label value"
+    #    value: "label value" # PARSED by Helm 'tpl' function passed $
     annotations: []
       #- name: "some-annotation"
-      #  value: "value"
+      #  value: "value" # PARSED by Helm 'tpl' function passed $
 
 
 # Options to customize the bootstrapSecret secret/mount details
@@ -178,18 +185,18 @@ healthcheck:
 
 
 # Optional but your chart should provide these
-# meta-variable subsitution supported here. See README
+# tpl variable substitution supported here. See README
 command:
   #command: ["java"]
 
   #preArgs: (optional)
-  # -"preArg1"
+  # -"preArg1"  # PARSED by Helm 'tpl' function passed $
 
   #args:
-  # -"arg1"
+  # -"arg1"  # PARSED by Helm 'tpl' function passed $
 
   #postArgs: (optional)
-  # -"postArg1"
+  # -"postArg1"  # PARSED by Helm 'tpl' function passed $
 
 
 
@@ -197,100 +204,116 @@ command:
 # @see https://github.com/bitsofinfo/kubernetes-helm-healthcheck-hook
 # NOTE you may want to adjust your helm client timeouts
 # accordingly to wait for these
+#
+# There are two subsections here
+# * "default": standard appdeploy hooks
+# * "custom": custom hooks you can define, default none
+#
 hooks:
 
-  # After install/upgrade we auto-check /health by default
-  # and then alert on the results.
-  postInstallUpgrade:
-    enabled: true
-    # if false, will use k8s service name
-    # [fullAppIdentifier].[.Release.Namespace].svc.cluster.local:[port] and NOT go via Ingress
-    useIngressHost: true
-    image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
-    maxRetries: 60
-    sleepSeconds: 30
-    hookDeletePolicy: hook-succeeded,before-hook-creation
-    debugOutput: false
-    checksConfig:
-      - name: "/health check"
-        path: "/health"
-        method: "GET"
-        timeout: 5
-        retries: 30
-        tags: ["80","443"]
-    slackConfig:
-      postDeploy:
-        name: "post-deploy"
-        # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
-        # the #bitsofinfo-dev channel
-        webhook_url: https://hooks.slack.com/services/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
-        template: >
-          {
-            "text":"*Deployed:* {{ check_name }} *{{ 'OK' if overall_result else 'FAILED' }}* ",
-            "attachments": [
-                {
-                  "color": "{{ 'good' if overall_result else 'danger' }}",
-                  "fields": [
-                    {
-                      "value":"{{ check_name }} has been deployed by *{{ extra_props.creatorId }}*. {{ 'All checks below are *OK*' if overall_result else 'One or more checks below *FAILED*' }}"
-                    }
-                  ]
-                }
+  # These are default chart hooks that ship w/ the chart out of the box
+  # you can disable/enable them as you wish
+  default:
 
-                {% for check in checks %}
-                  ,{
-                    "color": "{{ 'good' if check.result.success else 'danger' }}",
-                    "fields": [
-                      {
-                        "value":"{{ check.method }} *{{ check.path }}* *{{ 'SUCCEEDED' if check.result.success else 'FAILED' }}* with *{{ check.result.code }}*. {% if not check.result.success %}*reason:* {{ check.result.error }}{% endif %}"
+    # Default chart Hooks to be executed POST on upgrade/install
+    postInstallUpgrade:
+
+      # After install/upgrade we auto-check /health by default
+      # and then alert on the results.
+      validator:
+        enabled: true
+        # if false, will use k8s service name
+        # [fullAppIdentifier].[.Release.Namespace].svc.cluster.local:[port] and NOT go via Ingress
+        useIngressHost: true
+        image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
+        maxRetries: 60
+        sleepSeconds: 30
+        hookDeletePolicy: hook-succeeded,before-hook-creation
+        debugOutput: false
+        checksConfig:
+          - name: "/health check"
+            path: "/health"
+            method: "GET"
+            timeout: 5
+            retries: 30
+            tags: ["80","443"]
+        slackConfig:
+          postDeploy:
+            name: "post-deploy"
+            # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
+            # the #bitsofinfo-dev channel
+            webhook_url: https://hooks.slack.com/services/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
+            template: >
+              {
+                "text":"*Deployed:* {{ check_name }} *{{ 'OK' if overall_result else 'FAILED' }}* ",
+                "attachments": [
+                    {
+                      "color": "{{ 'good' if overall_result else 'danger' }}",
+                      "fields": [
+                        {
+                          "value":"{{ check_name }} has been deployed by *{{ extra_props.creatorId }}*. {{ 'All checks below are *OK*' if overall_result else 'One or more checks below *FAILED*' }}"
+                        }
+                      ]
+                    }
+
+                    {% for check in checks %}
+                      ,{
+                        "color": "{{ 'good' if check.result.success else 'danger' }}",
+                        "fields": [
+                          {
+                            "value":"{{ check.method }} *{{ check.path }}* *{{ 'SUCCEEDED' if check.result.success else 'FAILED' }}* with *{{ check.result.code }}*. {% if not check.result.success %}*reason:* {{ check.result.error }}{% endif %}"
+                          }
+                        ]
                       }
-                    ]
-                  }
-              {% endfor %}
-            ]
-          }
+                  {% endfor %}
+                ]
+              }
 
-  # After helm delete we validate that a 404 is returned
-  # for / for the generated ingress (i.e. it should be gone!)
-  postDelete:
-    enabled: true
-    # if false, will use k8s service name
-    # [fullAppIdentifier].[.Release.Namespace].svc.cluster.local:[port] and NOT go via Ingress
-    useIngressHost: true
-    image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
-    maxRetries: 60
-    sleepSeconds: 30
-    hookDeletePolicy: hook-succeeded,before-hook-creation
-    debugOutput: false
-    checksConfig:
-      - name: "/ post delete check"
-        path: "/"
-        method: "GET"
-        is_healthy:
-          # DNS issues also affirmative of it being deleted (if auto-dns removes name)
-          error_msg_reasons: ["Name does not resolve"]
-        is_not_healthy:
-          # anything OTHER than 200 is healthy.. (i.e. app does not exist)
-          response_codes: [200]
-        timeout: 5
-        retries: 30
-    slackConfig:
-      postDelete:
-        name: "post-delete"
-        # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
-        # the #bitsofinfo-dev channel
-        webhook_url: https://hooks.slack.com/services/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
-        template: >
-          {
-            "text":"*Removed:* {{ check_name }} *{{ 'OK' if overall_result else 'FAILED' }}* ",
-            "attachments": [
-                {
-                  "color": "{{ 'good' if overall_result else 'danger' }}",
-                  "fields": [
+
+    # Default chart Hooks to be executed POST on delete
+    postDelete:
+
+      # After helm delete we validate that a 404 is returned
+      # for / for the generated ingress (i.e. it should be gone!)
+      validator:
+        enabled: true
+        # if false, will use k8s service name
+        # [fullAppIdentifier].[.Release.Namespace].svc.cluster.local:[port] and NOT go via Ingress
+        useIngressHost: true
+        image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
+        maxRetries: 60
+        sleepSeconds: 30
+        hookDeletePolicy: hook-succeeded,before-hook-creation
+        debugOutput: false
+        checksConfig:
+          - name: "/ post delete check"
+            path: "/"
+            method: "GET"
+            is_healthy:
+              # DNS issues also affirmative of it being deleted (if auto-dns removes name)
+              error_msg_reasons: ["Name does not resolve"]
+            is_not_healthy:
+              # anything OTHER than 200 is healthy.. (i.e. app does not exist)
+              response_codes: [200]
+            timeout: 5
+            retries: 30
+        slackConfig:
+          postDelete:
+            name: "post-delete"
+            # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
+            # the #bitsofinfo-dev channel
+            webhook_url: https://hooks.slack.com/services/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
+            template: >
+              {
+                "text":"*Removed:* {{ check_name }} *{{ 'OK' if overall_result else 'FAILED' }}* ",
+                "attachments": [
                     {
-                      "value":"{{ check_name }} has been removed by *{{ extra_props.creatorId }}*."
+                      "color": "{{ 'good' if overall_result else 'danger' }}",
+                      "fields": [
+                        {
+                          "value":"{{ check_name }} has been removed by *{{ extra_props.creatorId }}*."
+                        }
+                      ]
                     }
-                  ]
-                }
-            ]
-          }
+                ]
+              }

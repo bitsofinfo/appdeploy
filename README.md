@@ -10,7 +10,7 @@ as a single Docker `image:tag/version` to be deployed to a Kubernetes cluster wh
 * [What its not intended for](#doesnot)
 * [Alerts](#alerts)
 * [Options](#options)
-* [Meta-variables](#metavar)
+* [tpl-variables](#metavar)
 * [Diagram](#diag)
 * [Examples](examples/)
 * [Using as a dependency](#dependency)
@@ -18,7 +18,7 @@ as a single Docker `image:tag/version` to be deployed to a Kubernetes cluster wh
 
 # <a id="convention"></a>Conventions
 
-In addition to whatever target k8s `namespace` the chart deploys into, all apps (single Docker `image:tag` artifacts) are labeled and categorized as follows with the following logical values. These values are made available to you in your `values` as variables you can feed into your `Deployment`. *(see `meta-variable substitution` below)*
+In addition to whatever target k8s `namespace` the chart deploys into, all apps (single Docker `image:tag` artifacts) are labeled and categorized as follows with the following logical values. These values (*and any other chart value*) are made available to you to cross reference in other `values` via Helm's `tpl` evaluation function for your `Deployment`. *(see `tpl variable substitution` below)*
 
 ### appname
 The logical *name* for the application being deployed.
@@ -37,7 +37,7 @@ Sometimes an application artifact may operate in different *modes*, these differ
 
 ---
 
-Again all of the above is simple a convention of this chart but does not physically *impose anything* on the artifacts you choose to deploy with this chart. These attributes are however made available to you as as variables in the chart itself that you can leverage to route into a Pod's `spec.template` commands, args and env variables; which can then subsequently be consumed to drive an app to make decisions on how to bootstrap itself, what configs to load etc. *(see `meta-variable substitution` below)*
+Again all of the above is simple a convention of this chart but does not physically *impose anything* on the artifacts you choose to deploy with this chart. These attributes (and anything else in `values.yaml`) are however made available to you as as variables in the chart itself that you can leverage to route into a Pod's `spec.template` commands, args and env variables; which can then subsequently be consumed to drive an app to make decisions on how to bootstrap itself, what configs to load etc. *(see `tpl variable substitution` below)*
 
 In short, the above concepts may or may not work for you, but have proved to be a useful set of conventions used in the real world and has worked pretty well.
 
@@ -83,20 +83,35 @@ All configurable options are documented in [values.yaml](values.yaml)
 See the [helm docs for setting values](https://github.com/helm/helm/blob/master/docs/chart_best_practices/values.md)
 on how to customize/change these values when doing a `helm ...` invocation.
 
-## <a id="metavar"></a>meta-variable substitution
+## <a id="metavar"></a>tpl variable substitution
 
-Certain `values` can contain "meta-variables" that will be parsed into real values which
-can be useful when specifying `env` vars or `command.args` values. You can use these meta-variables
-directly in your `values` and they will be replaced with the real value as noted below.
+Certain chart `values` can themselves be mini `templates` i.e. (`chartValue: "{{ .Values.someOtherValueRef }}`) (parsed via [Helm's tpl function](https://github.com/helm/helm/blob/master/docs/charts_tips_and_tricks.md) function). This can be useful when specifying `env` vars or `command.args` values and most labels etc. See [values.yaml](values.yaml) for full details on what values are parsed by `tpl`.
 
-* `[[#app.name]]`: replaced with value of `.Values.app.name`
-* `[[#app.context]]`: replaced with value of `.Values.app.context`
-* `[[#app.environment]]`: replaced with value of `.Values.app.environment`
-* `[[#app.classifier]]`: replaced with value of `.Values.app.classifier`
-* `[[#image.tag]]`: replaced with value of `.Values.image.tag`
-* `[[#namespace]]`: replaced with value of `.Release.Namespace`
-* `[[#fullAppIdentifier]]`: replaced with value of `[app.name]-[app.context]-[image.tag | replace "." "-"][-[app.classifier]]`
-* `[[#bootstrapSecretFilePath]]`: replaced with value of `.Values.bootstrapSecret.mount.path/.Values.bootstrapSecret.mount.fileName`
+Currently the following are parsed:
+
+* Any `.Values.env.[name].value`
+* Any `.Values.command.args`
+* Any `service.labels.[name].value`
+* Any `deployment.template.labels.[name].value`
+* Any `ingress.metadata.labels.[name].value`
+* Any `ingress.metadata.annotations.[name].value`
+
+You can reference any valid path relative from `.` (i.e. `$`). Some custom generated
+variables that are composed and not literally in `values.yaml`:
+* `.fullAppIdentifier_full` = `[app.shortName]-[app.context]-[image.tag][-[app.classifier]]`
+* `.fullAppIdentifier_short` = a shorter version of `.fullAppIdentifier_full` if > 63 chars
+* `.fullAppIdentifier_hash` = hash of `.fullAppIdentifier_full`
+* `.fullAppIdentifier` = one of the latter values, whichever is < 63 chars in decending order
+* `.bootstrapSecretFilePath` = `.Values.bootstrapSecret.mount.path/.Values.bootstrapSecret.mount.fileName`
+* `.serviceAccountName` = `.Values.serviceAccount.name` (which is a `tpl` parsed value)
+
+Basic example of what you can declare in your `values`:
+```
+...
+env:
+  MY_VAR_NAME:
+    value: "{{ .Values.app.name | replace 'dog' 'cat' }}"
+```
 
 ## Examples
 
@@ -160,6 +175,6 @@ helm repo update
 # requirements.yaml
 dependencies:
 - name: appdeploy
-  version: "1.0.2"
+  version: "1.1.0"
   repository: "https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo"
 ```
