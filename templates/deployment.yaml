@@ -62,6 +62,7 @@
 {{- $_ := set . "serviceAccountName" (tpl .Values.serviceAccount.name .) -}}
 
 
+
 {{- /* ---------------------------------------------------------------
       Standard Labels TEMPLATE
       Usage {{ include "stdlabels.tpl" $stdlabelsargs | indent N }}
@@ -89,6 +90,233 @@
 
 
 
+{{- /* ---------------------------------------------------------------
+    Bootstrap Secret TEMPLATE
+
+    (used by main deploy + optional hook-jobs)
+
+    Usage {{ include "secret.tpl" [arg] | indent N }}
+
+    Params: [arg] must be a dict with the following structure:
+    ---------
+      root: $
+      bootstrapSecretName: name of secret to create
+      bootstrapSecret: (dict)
+        k8Secret:
+          valueKey:
+          secretValue:
+      annotations: (dict OPTIONAL)
+        [annotation-name]: [annotation-value]
+        [annotation-name]: [annotation-value]
+        ...
+--------------------------------------------------------------- */}}
+{{- define "secret.tpl" }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: {{ .root.Release.Namespace }}
+  name: {{ .bootstrapSecretName }}
+  labels:
+    {{ include "stdlabels.tpl" .root.stdlabelsargs | indent 4 }}
+
+  {{ if hasKey . "annotations" }}
+  annotations:
+    {{ range $name,$val := .annotations }}
+    "{{$name}}": "{{ $val }}"
+    {{ end }}
+  {{ end }}
+type: Opaque
+stringData:
+  {{ .bootstrapSecret.k8Secret.valueKey }}: {{ .bootstrapSecret.k8Secret.secretValue }}
+{{- end }}
+
+
+
+
+{{- /* ---------------------------------------------------------------
+    Pod "template" TEMPLATE
+
+    (used by main Deployment + optional hook-jobs)
+
+    Usage {{ include "podtemplate.tpl" [arg] | indent N }}
+
+    Params: [arg] must be a dict with the following structure:
+    ---------
+      root: $
+      podconfig:
+        podName: (should be generated and set by caller)
+        serviceAccountName: (should be generated and set by caller)
+        bootstrapSecretName: (should be generated and set by caller)
+
+        labels: (typically from pod.labels )
+
+        (for all below, see values.yaml for structure)
+        image:
+        restartPolicy:
+        imagePullSecrets:
+        bootstrapSecret:
+        securityContext:
+        containerPorts:
+        resources:
+        healthcheck:
+        env:
+        command:
+--------------------------------------------------------------- */}}
+{{- define "podtemplate.tpl" }}
+{{ $root := .root }}
+template:
+  metadata:
+    labels:
+      {{ include "stdlabels.tpl" .root.stdlabelsargs | indent 6 }}
+
+      {{ if .podconfig.labels }}
+        {{- range $label := .podconfig.labels }}
+      "{{ $label.name }}": "{{ tpl $label.value $root }}"
+        {{- end }}
+      {{- end }}
+  spec:
+    {{ if hasKey .podconfig "restartPolicy" }}
+    restartPolicy: {{.podconfig.restartPolicy}}
+    {{ end }}
+
+    {{ if hasKey .podconfig "serviceAccountName" }}
+    serviceAccountName: {{ .podconfig.serviceAccountName }}
+    {{ end }}
+
+    {{ if hasKey .podconfig "imagePullSecrets" }}
+    imagePullSecrets:
+      {{ range $secretName := .podconfig.imagePullSecrets }}
+      - name: {{ $secretName }}
+      {{ end }}
+    {{ end }}
+    volumes:
+      {{ if .podconfig.bootstrapSecret.enabled }}
+      - name: bootstrap-secret-volume
+        secret:
+          secretName: {{ .podconfig.bootstrapSecretName }}
+          defaultMode: 256
+          items:
+            - key: {{ .podconfig.bootstrapSecret.k8Secret.valueKey }}
+              path: {{ .podconfig.bootstrapSecret.mount.fileName }}
+      {{ end }}
+    containers:
+      - name: {{ .podconfig.podName }}
+        image: {{ .podconfig.image.repository }}:{{ .podconfig.image.tag }}
+
+        {{ if hasKey .podconfig "securityContext" }}
+        securityContext:
+          {{ if hasKey .podconfig.securityContext "allowPrivilegeEscalation" }}
+          allowPrivilegeEscalation: {{ .podconfig.securityContext.allowPrivilegeEscalation }}
+          {{ end }}
+          {{ if .podconfig.securityContext.runAsUser }}
+          runAsUser: {{ .podconfig.securityContext.runAsUser }}
+          {{ end }}
+          {{ if .podconfig.securityContext.runAsGroup }}
+          runAsGroup: {{ .podconfig.securityContext.runAsGroup }}
+          {{ end }}
+        {{ end }}
+
+        volumeMounts:
+          {{ if .podconfig.bootstrapSecret.enabled }}
+          - name: bootstrap-secret-volume
+            mountPath: "{{ .podconfig.bootstrapSecret.mount.path }}"
+            readOnly: true
+          {{ end }}
+
+        {{ if hasKey .podconfig "containerPorts" }}
+        ports:
+          {{- range $containerPort := .podconfig.containerPorts }}
+            {{- if $containerPort.classifiers }}
+              {{- if has $.Values.app.classifier $containerPort.classifiers }}
+          - containerPort: {{ $containerPort.port }}
+              {{- end }}
+            {{- else }}
+          - containerPort: {{ $containerPort.port }}
+            {{- end }}
+          {{- end }}
+        {{ end }}
+
+        {{ if hasKey .podconfig "resources" }}
+        resources:
+          {{ if and .podconfig.resources.limits -}}
+          limits:
+            cpu: "{{ .podconfig.resources.limits.cpu }}"
+          {{ end -}}
+          {{ if and .podconfig.resources.requests -}}
+          requests:
+            cpu: "{{ .podconfig.resources.requests.cpu }}"
+          {{ end -}}
+        {{ end }}
+
+        {{ if .podconfig.healthcheck }}
+          {{ if .podconfig.healthcheck.liveness }}
+            {{ if eq .podconfig.healthcheck.liveness.disabled "false" }}
+        livenessProbe:
+          httpGet:
+            scheme: {{ .podconfig.healthcheck.liveness.scheme }}
+            path: {{ .podconfig.healthcheck.liveness.path }}
+            port: {{ .podconfig.healthcheck.liveness.containerPort }}
+          initialDelaySeconds: {{ .podconfig.healthcheck.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .podconfig.healthcheck.liveness.periodSeconds }}
+          timeoutSeconds: {{ .podconfig.healthcheck.liveness.timeoutSeconds }}
+          failureThreshold: {{ .podconfig.healthcheck.liveness.failureThreshold }}
+            {{ end }}
+          {{ end }}
+          {{ if .podconfig.healthcheck.readiness }}
+            {{ if eq .podconfig.healthcheck.readiness.disabled "false" }}
+        readinessProbe:
+          httpGet:
+            scheme: {{ .podconfig.healthcheck.readiness.scheme }}
+            path: {{ .podconfig.healthcheck.readiness.path }}
+            port: {{ .podconfig.healthcheck.readiness.containerPort }}
+          initialDelaySeconds: {{ .podconfig.healthcheck.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .podconfig.healthcheck.readiness.periodSeconds }}
+          timeoutSeconds: {{ .podconfig.healthcheck.readiness.timeoutSeconds }}
+          failureThreshold: {{ .podconfig.healthcheck.readiness.failureThreshold }}
+            {{ end }}
+          {{ end }}
+        {{ end }}
+
+        env:
+          {{- range $key, $value := .podconfig.env }}
+          - name: {{ $key }}
+            {{- if and $value $value.value }}
+            value: "{{ tpl $value.value $root }}"
+            {{ else }}
+            value: ""
+            {{- end -}}
+          {{- end }}
+
+        {{ if .podconfig.command }}
+
+          {{ if .podconfig.command.command }}
+        command: {{ .podconfig.command.command }}
+          {{ end }}
+
+          {{ if .podconfig.command.args }}
+        args:
+          {{ if .podconfig.command.preArgs }}
+            {{- range $arg := .podconfig.command.preArgs }}
+          - "{{ tpl $arg $root }}"
+            {{- end }}
+          {{ end }}
+
+          {{- range $arg := .podconfig.command.args }}
+          - "{{ tpl $arg $root }}"
+          {{- end }}
+
+          {{ if .podconfig.command.preArgs }}
+            {{- range $arg := .podconfig.command.postArgs }}
+          - "{{ tpl $arg $root }}"
+            {{- end }}
+          {{ end }}
+          {{- end }}
+        {{- end }}
+
+{{ end }}
+
+
 
 
 
@@ -98,11 +326,9 @@
 ---------------------------------------------------------------------- */}}
 {{- if .Values.serviceAccount.create }}
 
-
 {{ $serviceAccountNamespace := tpl .Values.serviceAccount.namespace . }}
 
 ---
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -110,7 +336,6 @@ metadata:
   namespace: {{ $serviceAccountNamespace }}
 
 ---
-
 kind: {{ $.Values.serviceAccount.kind }}
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -131,7 +356,6 @@ rules:
   {{ end }}
 
 ---
-
 # ClusterRoleBinding | RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 kind: {{ (eq $.Values.serviceAccount.kind "ClusterRole") | ternary "ClusterRoleBinding" "RoleBinding" }}
@@ -153,26 +377,22 @@ subjects:
 
 
 
+
 {{- /* ---------------------------------------------------------------
       Version specific Bootstrap Secret
+
+      Here we invoke the secret.tpl defined previously
 ---------------------------------------------------------------------- */}}
 
 {{ if .Values.bootstrapSecret.enabled }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  namespace: {{ .Release.Namespace }}
-  name: {{ $.bootstrapSecretName }}
-  labels:
-    {{ include "stdlabels.tpl" $.stdlabelsargs | indent 4 }}
-type: Opaque
-stringData:
-  {{ .Values.bootstrapSecret.k8Secret.valueKey }}: {{ .Values.bootstrapSecret.k8Secret.secretValue }}
+{{- $secretargs := dict "root" $ "bootstrapSecretName" .bootstrapSecretName "bootstrapSecret" .Values.bootstrapSecret }}
+{{ include "secret.tpl" $secretargs }}
 {{ end }}
 
 {{- /* ---------------------------------------------------------------
       Version specific Deployment object
+
+      For the Pod "template" we invoke podtemplate.tpl defined previously
 ---------------------------------------------------------------------- */}}
 ---
 apiVersion: apps/v1
@@ -193,136 +413,23 @@ spec:
       {{ if .Values.app.classifier }}
       "{{ .Values.labelNames.appClassifier }}": {{ .Values.app.classifier }}
       {{ end }}
-  template:
-    metadata:
-      labels:
-        "{{ .Values.labelNames.appName }}": {{ .Values.app.name }}
-        "{{ .Values.labelNames.appContext }}": {{ .Values.app.context }}
-        "{{ .Values.labelNames.appEnvironment }}": {{ .Values.app.environment }}
-        "{{ .Values.labelNames.appVersion }}": {{ .Values.image.tag }}
-        {{ if .Values.app.classifier }}
-        "{{ .Values.labelNames.appClassifier }}": {{ .Values.app.classifier }}
-        {{ end }}
-        "{{ .Values.labelNames.creatorId }}": "{{ .Values.creatorId | replace "@" "_" }}"
-        {{- range $label := .Values.deployment.template.labels }}
-        "{{ $label.name }}": "{{ tpl $label.value $ }}"
-        {{- end }}
-        "app.kubernetes.io/name": {{ .Values.app.name }}
-        "app.kubernetes.io/managed-by": {{ .Release.Service }}
-        "app.kubernetes.io/instance": {{ $.fullAppIdentifier }}
-        "app.kubernetes.io/version": {{ $.Values.image.tag }}
-        "app.kubernetes.io/part-of": {{ .Values.app.name }}
-        "app.kubernetes.io/component": "app"
-        "helm.sh/chart": {{ .Chart.Name }}-{{ .Chart.Version }}
-    spec:
-      serviceAccountName: {{ $.serviceAccountName }}
-      {{ if hasKey .Values "imagePullSecrets" }}
-      imagePullSecrets:
-        {{ range $secretName := .Values.imagePullSecrets }}
-        - name: {{ $secretName }}
-        {{ end }}
-      {{ end }}
-      volumes:
-        {{ if .Values.bootstrapSecret.enabled }}
-        - name: bootstrap-secret-volume
-          secret:
-            secretName: {{ $.bootstrapSecretName }}
-            defaultMode: 256
-            items:
-              - key: {{ .Values.bootstrapSecret.k8Secret.valueKey }}
-                path: {{ .Values.bootstrapSecret.mount.fileName }}
-        {{ end }}
-      containers:
-        - name: {{ .Values.app.name }}
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          securityContext:
-            {{ if hasKey .Values.securityContext "allowPrivilegeEscalation" }}
-            allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation }}
-            {{ end }}
-            {{ if .Values.securityContext.runAsUser }}
-            runAsUser: {{ .Values.securityContext.runAsUser }}
-            {{ end }}
-            {{ if .Values.securityContext.runAsGroup }}
-            runAsGroup: {{ .Values.securityContext.runAsGroup }}
-            {{ end }}
-          volumeMounts:
-            {{ if .Values.bootstrapSecret.enabled }}
-            - name: bootstrap-secret-volume
-              mountPath: "{{ .Values.bootstrapSecret.mount.path }}"
-              readOnly: true
-            {{ end }}
-          ports:
-            {{- range $containerPort := .Values.containerPorts }}
-              {{- if $containerPort.classifiers }}
-                {{- if has $.Values.app.classifier $containerPort.classifiers }}
-            - containerPort: {{ $containerPort.port }}
-                {{- end }}
-              {{- else }}
-            - containerPort: {{ $containerPort.port }}
-              {{- end }}
-            {{- end }}
-          {{ if and .Values.resources }}
-          resources:
-            {{ if and .Values.resources.limits -}}
-            limits:
-              cpu: "{{ .Values.resources.limits.cpu }}"
-            {{ end -}}
-            {{ if and .Values.resources.requests -}}
-            requests:
-              cpu: "{{ .Values.resources.requests.cpu }}"
-            {{ end -}}
-          {{ end }}
-          {{ if eq .Values.healthcheck.liveness.disabled "false" }}
-          livenessProbe:
-            httpGet:
-              scheme: {{ .Values.healthcheck.liveness.scheme }}
-              path: {{ .Values.healthcheck.liveness.path }}
-              port: {{ .Values.healthcheck.liveness.containerPort }}
-            initialDelaySeconds: {{ .Values.healthcheck.liveness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.healthcheck.liveness.periodSeconds }}
-            timeoutSeconds: {{ .Values.healthcheck.liveness.timeoutSeconds }}
-            failureThreshold: {{ .Values.healthcheck.liveness.failureThreshold }}
-          {{ end }}
-          {{ if eq .Values.healthcheck.readiness.disabled "false" }}
-          readinessProbe:
-            httpGet:
-              scheme: {{ .Values.healthcheck.readiness.scheme }}
-              path: {{ .Values.healthcheck.readiness.path }}
-              port: {{ .Values.healthcheck.readiness.containerPort }}
-            initialDelaySeconds: {{ .Values.healthcheck.readiness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.healthcheck.readiness.periodSeconds }}
-            timeoutSeconds: {{ .Values.healthcheck.readiness.timeoutSeconds }}
-            failureThreshold: {{ .Values.healthcheck.readiness.failureThreshold }}
-          {{ end }}
 
-          env:
-            {{- range $key, $value := .Values.env }}
-            - name: {{ $key }}
-              {{- if and $value $value.value }}
-              value: "{{ tpl $value.value $ }}"
-              {{ else }}
-              value: ""
-              {{- end -}}
-            {{- end }}
-
-          {{ if .Values.command }}
-          command: {{ .Values.command.command }}
-
-          {{ if .Values.command.args }}
-          args:
-            {{- range $arg := .Values.command.preArgs }}
-            - "{{ tpl $arg $ }}"
-            {{- end }}
-
-            {{- range $arg := .Values.command.args }}
-            - "{{ tpl $arg $ }}"
-            {{- end }}
-
-            {{- range $arg := .Values.command.postArgs }}
-            - "{{ tpl $arg $ }}"
-            {{- end }}
-          {{- end }}
-          {{- end }}
+{{- $podConfig := dict "podName" .Values.app.name }}
+{{- $podTemplateArgs := dict "root" $ "podconfig" $podConfig }}
+{{- $_ := set $podConfig "serviceAccountName" .serviceAccountName }}
+{{- $_ := set $podConfig "bootstrapSecretName" .bootstrapSecretName }}
+{{- $_ := set $podConfig "image" .Values.image }}
+{{- $_ := set $podConfig "labels" .Values.pod.labels }}
+{{- $_ := set $podConfig "restartPolicy" .Values.restartPolicy }}
+{{- $_ := set $podConfig "imagePullSecrets" .Values.imagePullSecrets }}
+{{- $_ := set $podConfig "bootstrapSecret" .Values.bootstrapSecret }}
+{{- $_ := set $podConfig "securityContext" .Values.securityContext }}
+{{- $_ := set $podConfig "containerPorts" .Values.containerPorts }}
+{{- $_ := set $podConfig "resources" .Values.resources }}
+{{- $_ := set $podConfig "healthcheck" .Values.healthcheck }}
+{{- $_ := set $podConfig "env" .Values.env }}
+{{- $_ := set $podConfig "command" .Values.command }}
+{{ include "podtemplate.tpl" $podTemplateArgs | indent 2 }}
 
 
 {{- /* ---------------------------------------------------------------
@@ -382,19 +489,17 @@ spec:
       arg dict:
         "root" = $
         "objectIdentifier" = create all objects with this "name"
-        "containerPort" = containerPort the igress is for
+        "containerPort" = containerPort of the Ingress the Hook check is for
 ---------------------------------------------------------------------- */}}
 {{- define "default.validator.hooks" }}
 
 {{/* -------------------------------------
-     HOOK Support: POST INSTALL UPGRADE ConfigMap
-    (note this is part of the release but only
-    here for the Job to consume, technically
-    not a Hook due to lack of annotation)
+     ConfigMap for Post Install/Upgrade Job
 ------------------------------------------ */}}
   {{ if .root.Values.hooks.default.postInstallUpgrade.validator.enabled }}
 
-  {{ $hookObjectName := printf "%s-%s-postdeploy-validator" .objectIdentifier (.containerPort.port | toString) | replace "-" "" }}
+  {{ $hookObjectName := printf "%s-%s-hook-postinstallupgrade-validator" .objectIdentifier (.containerPort.port | toString) }}
+  {{ $hookObjectName_short := $hookObjectName | replace "-" "" }}
 ---
 
 apiVersion: v1
@@ -411,14 +516,13 @@ data:
 {{ toYaml .root.Values.hooks.default.postInstallUpgrade.validator.slackConfig | indent 4 }}
 
 {{/* -------------------------------------
-     HOOK: POST INSTALL/UPGRADE Job
-     (Checks health and alerts)
+     Post Install/Upgrade Job
 ------------------------------------------ */}}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ $hookObjectName }}"
+  name: "{{ $hookObjectName_short }}"
   namespace: "{{ .root.Release.Namespace }}"
   labels:
     {{ include "stdlabels.tpl" .root.stdlabelsargs | indent 4 }}
@@ -431,7 +535,7 @@ spec:
   activeDeadlineSeconds: 300 # max run for 10 minutes (i.e. inclusive of retries)
   template:
     metadata:
-      name: "{{ $hookObjectName }}"
+      name: "{{ $hookObjectName_short }}"
     spec:
       restartPolicy: Never
       volumes:
@@ -439,7 +543,7 @@ spec:
           configMap:
             name: {{ $hookObjectName }}
       containers:
-        - name: {{ $hookObjectName }}
+        - name: {{ regexReplaceAll "[\\._/:]" .root.Values.hooks.default.postDelete.validator.image "-" }}
           image: "{{ .root.Values.hooks.default.postInstallUpgrade.validator.image }}"
           command:
             - "checker.py"
@@ -482,11 +586,12 @@ spec:
 
 
 {{/* -------------------------------------
-     HOOK Support: POST DELETE ConfigMap
+     ConfigMap for Post Delete Job
 ------------------------------------------ */}}
   {{ if .root.Values.hooks.default.postDelete.validator.enabled }}
 
-    {{ $hookObjectName := printf "%s-%s-postdelete-validator" .objectIdentifier (.containerPort.port | toString) | replace "-" "" }}
+    {{ $hookObjectName := printf "%s-%s-hook-postdelete-validator" .objectIdentifier (.containerPort.port | toString) }}
+    {{ $hookObjectName_short := $hookObjectName | replace "-" "" }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -506,15 +611,13 @@ data:
 {{ toYaml .root.Values.hooks.default.postDelete.validator.slackConfig | indent 4 }}
 
 {{/* -------------------------------------
-     HOOK: POST DELETE Job
-
-    (Checks health (i.e. expects 404) and notifies)
+     Post Delete Job
 ------------------------------------------ */}}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ $hookObjectName }}"
+  name: "{{ $hookObjectName_short }}"
   namespace: "{{ .root.Release.Namespace }}"
   labels:
     {{ include "stdlabels.tpl" .root.stdlabelsargs | indent 4 }}
@@ -527,7 +630,7 @@ spec:
   activeDeadlineSeconds: 300 # max run for 10 minutes (i.e. inclusive of retries)
   template:
     metadata:
-      name: "{{ $hookObjectName }}"
+      name: "{{ $hookObjectName_short }}"
     spec:
       restartPolicy: Never
       volumes:
@@ -535,7 +638,7 @@ spec:
           configMap:
             name: {{ $hookObjectName }}
       containers:
-        - name: {{ $hookObjectName }}
+        - name: {{ regexReplaceAll "[\\._/:]" .root.Values.hooks.default.postDelete.validator.image "-" }}
           image: "{{ .root.Values.hooks.default.postDelete.validator.image }}"
           command:
             - "checker.py"
@@ -584,12 +687,11 @@ spec:
 
       What follows defines a embedded golang template
       that is invoked later at bottom of this file
-      One for each unique container port
 
       arg dict:
         "root" = $
         "objectIdentifier" = create all objects with this "name"
-        "containerPort" = containerPort the igress is for
+        "containerPort" = containerPort the Ingress is for
 ---------------------------------------------------------------------- */}}
 {{- define "ingress.template" }}
 
@@ -647,8 +749,15 @@ spec:
 
 
 {{- /* ---------------------------------------------------------------
+
       Version specific Ingress objects (one per port)
+
       This also generates the hooks.default (validators) to test each url
+      for each Ingress that is generated
+
+      Below we leverage the following templates defined previously:
+        - "ingress.template"
+        - "default.validator.hooks"
 ---------------------------------------------------------------------- */}}
 
 {{- range $containerPort := .Values.containerPorts }}
@@ -690,3 +799,111 @@ spec:
     {{ end }}
   {{ end }}
 {{ end }}
+
+
+
+
+
+
+{{- /* ---------------------------------------------------------------
+      Custom Hooks
+
+      This processes any keys defined in values that are
+      within -> "hooks.custom"
+
+      Here we leverage the following templates:
+        - secret.tpl
+        - podtemplate.tpl (for the generated Job Pod template)
+---------------------------------------------------------------------- */}}
+
+{{ if .Values.hooks.custom }}
+  {{ range $hookName, $hook := .Values.hooks.custom }}
+
+    {{ if $hook.enabled }}
+
+      {{- $fullHookName := printf "%s-hook-%s" $.fullAppIdentifier $hookName }}
+
+      {{- $variables := dict "variables" $hook.variables }}
+      {{- $variables := set $ "hookBootstrapSecretFilePath" (printf "%s/%s" $hook.bootstrapSecret.mount.path $hook.bootstrapSecret.mount.fileName)}}
+
+      {{- $hookBootstrapSecretName := printf "%s-%s" $fullHookName "bootstrapsecret" }}
+
+  {{- /* ~~~~~~~~~~~~~~~~~~~~~~~~~
+    If the custom hook has a bootstrapSecret
+    defined and enabled, lets generate it
+
+    IMPORTANT! this assumes the caller has set:
+    hooks.custom.[hookname].bootstrapSecret.k8Secret.secretValue
+
+    Which is also `tpl` parsed as it could just reference
+    the main root level {{.Values.bootstrapSecret.k8Secret.secretValue}}
+
+    Note: the annotation for "helm.sh/hook-weight" is forced to -100
+    as secrets must be created prior to jobs...
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */}}
+  {{ if $hook.bootstrapSecret.enabled }}
+
+    {{ $evaluatedSecretValue := tpl $hook.bootstrapSecret.k8Secret.secretValue $ }}
+    {{- $_ := set $hook.bootstrapSecret.k8Secret "secretValue" $evaluatedSecretValue }}
+
+    {{- $secretargs := dict "root" $ "bootstrapSecretName" $hookBootstrapSecretName "bootstrapSecret" $hook.bootstrapSecret }}
+    {{- $_ := set $secretargs "annotations" (dict "helm.sh/hook" $hook.hook.type "helm.sh/hook-weight" "-100" "helm.sh/hook-delete-policy" $hook.hook.deletePolicy) }}
+
+{{ include "secret.tpl" $secretargs }}
+
+  {{ end }}
+
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ $fullHookName }}"
+  namespace: "{{ $.Release.Namespace }}"
+  labels:
+    {{ include "stdlabels.tpl" $.stdlabelsargs | indent 4 }}
+  annotations:
+    "helm.sh/hook": "{{ $hook.hook.type }}"
+    "helm.sh/hook-weight": "{{ $hook.hook.weight }}"
+    "helm.sh/hook-delete-policy": "{{ $hook.hook.deletePolicy }}"
+spec:
+  backoffLimit: {{ $hook.job.backoffLimit }}
+  activeDeadlineSeconds: {{ $hook.job.activeDeadlineSeconds }}
+
+{{- $podConfig := dict "podName" $fullHookName }}
+{{- $podTemplateArgs := dict "root" $ "podconfig" $podConfig }}
+{{- $_ := set $podConfig "serviceAccountName" $hook.serviceAccount.name }}
+{{- $_ := set $podConfig "bootstrapSecretName" $hookBootstrapSecretName }}
+{{- $_ := set $podConfig "image" $hook.image }}
+{{- $_ := set $podConfig "restartPolicy" $hook.restartPolicy }}
+{{- $_ := set $podConfig "imagePullSecrets" $hook.imagePullSecrets }}
+{{- $_ := set $podConfig "bootstrapSecret" $hook.bootstrapSecret }}
+{{ if hasKey $hook "pod" }}
+  {{- $_ := set $podConfig "labels" $hook.pod.labels }}
+{{ end }}
+{{ if hasKey $hook "securityContext" }}
+  {{- $_ := set $podConfig "securityContext" $hook.securityContext }}
+{{ end }}
+{{ if hasKey $hook "containerPorts" }}
+  {{- $_ := set $podConfig "containerPorts" $hook.containerPorts }}
+{{ end }}
+{{ if hasKey $hook "resources" }}
+  {{- $_ := set $podConfig "resources" $hook.resources }}
+{{ end }}
+{{ if hasKey $hook "healthcheck" }}
+  {{- $_ := set $podConfig "healthcheck" $hook.healthcheck }}
+{{ end }}
+{{ if hasKey $hook "env" }}
+  {{- $_ := set $podConfig "env" $hook.env }}
+{{ end }}
+{{ if hasKey $hook "command" }}
+  {{- $_ := set $podConfig "command" $hook.command }}
+{{ end }}
+
+{{ include "podtemplate.tpl" $podTemplateArgs | indent 2 }}
+
+    {{ end }} {{/* END if hook.enabled */}}
+
+  {{ end }} {{/* END range .Values.hooks.custom */}}
+
+{{ end }} {{/* END if .Values.hooks.custom */}}

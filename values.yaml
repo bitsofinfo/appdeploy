@@ -75,11 +75,16 @@ serviceAccount:
   #resources: []
   #verbs: []
 
-# Optiona: The k8s secret name to be used if the Deployment object
+# Options to customize the securityContext of Pods in the Deployment
+securityContext:
+  allowPrivilegeEscalation: false
+  #runAsUser: 9999
+  #runAsGroup: 9999
+
+# Optional: The k8s secret name to be used if the Deployment object
 # needs to pull images (i.e. if your image.repository is custom)
 # should be an array of k8s secret names (strings)
 imagePullSecrets: []
-
 
 # You should list at least ONE containerPort
 containerPorts:
@@ -97,19 +102,18 @@ containerPorts:
 # standard one from app.name
 aliases: []
 
-# Options to customize the securityContext of Pods in the Deployment
-securityContext:
-  allowPrivilegeEscalation: false
-  #runAsUser: 9999
-  #runAsGroup: 9999
 
-# Deployment customization
-deployment:
-  template:
-    # tpl variable substitution supported in values here. See README
-    labels: []
-    #  - name: "label-name"
-    #    value: "label value" # PARSED by Helm 'tpl' function passed $
+# Optional: specify the Pod restart policy
+restartPolicy: Always
+
+
+# Pod customization
+pod:
+  # tpl variable substitution supported in values here. See README
+  labels: []
+  #  - name: "label-name"
+  #    value: "label value" # PARSED by Helm 'tpl' function passed $
+
 
 # Options to customize the generated version specific Service
 service:
@@ -187,7 +191,7 @@ healthcheck:
 # Optional but your chart should provide these
 # tpl variable substitution supported here. See README
 command:
-  #command: ["java"]
+  #command: ["java"] # optional
 
   #preArgs: (optional)
   # -"preArg1"  # PARSED by Helm 'tpl' function passed $
@@ -211,6 +215,13 @@ command:
 #
 hooks:
 
+  # Custom jobs
+  # Optional
+  custom:
+
+
+  # Default jobs:
+  #
   # These are default chart hooks that ship w/ the chart out of the box
   # you can disable/enable them as you wish
   default:
@@ -229,7 +240,7 @@ hooks:
         maxRetries: 60
         sleepSeconds: 30
         hookDeletePolicy: hook-succeeded,before-hook-creation
-        debugOutput: false
+        debugOutput: false # enables very verbose logging to aid in debugging
         checksConfig:
           - name: "/health check"
             path: "/health"
@@ -284,7 +295,7 @@ hooks:
         maxRetries: 60
         sleepSeconds: 30
         hookDeletePolicy: hook-succeeded,before-hook-creation
-        debugOutput: false
+        debugOutput: false # enables very verbose logging to aid in debugging
         checksConfig:
           - name: "/ post delete check"
             path: "/"
