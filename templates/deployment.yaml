@@ -233,9 +233,10 @@ template:
 
         {{- if hasKey .podconfig "containerPorts" }}
         ports:
+          {{- $podConfigClassifier := .podconfig.classifier }}
           {{- range $containerPort := .podconfig.containerPorts }}
             {{- if $containerPort.classifiers }}
-              {{- if has .podconfig.classifier $containerPort.classifiers }}
+              {{- if has $podConfigClassifier $containerPort.classifiers }}
           - containerPort: {{ $containerPort.port }}
               {{- end }}
             {{- else }}
