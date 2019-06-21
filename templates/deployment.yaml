@@ -235,7 +235,7 @@ template:
         ports:
           {{- range $containerPort := .podconfig.containerPorts }}
             {{- if $containerPort.classifiers }}
-              {{- if has .podconfig.app.classifier $containerPort.classifiers }}
+              {{- if has .podconfig.classifier $containerPort.classifiers }}
           - containerPort: {{ $containerPort.port }}
               {{- end }}
             {{- else }}
@@ -423,6 +423,7 @@ spec:
 
 {{- $podConfig := dict "podName" .Values.app.name }}
 {{- $podTemplateArgs := dict "root" $ "podconfig" $podConfig }}
+{{- $_ := set $podConfig "classifier" .Values.app.classifier }}
 {{- $_ := set $podConfig "serviceAccountName" .serviceAccountName }}
 {{- $_ := set $podConfig "bootstrapSecretName" .bootstrapSecretName }}
 {{- $_ := set $podConfig "image" .Values.image }}
@@ -889,6 +890,7 @@ spec:
 
 {{- $_ := set $podConfig "bootstrapSecretName" $hookBootstrapSecretName }}
 {{- $_ := set $podConfig "image" $hook.image }}
+{{- $_ := set $podConfig "classifier" $.Values.app.classifier }}
 
 {{ if hasKey $hook "restartPolicy" }}
   {{- $_ := set $podConfig "restartPolicy" $hook.restartPolicy }}
