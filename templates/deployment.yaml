@@ -507,7 +507,7 @@ spec:
 ------------------------------------------ */}}
   {{ if .root.Values.hooks.default.postInstallUpgrade.validator.enabled }}
 
-  {{ $hookObjectName := printf "%s-%s-hook-postinstallupgrade-validator" .objectIdentifier (.containerPort.port | toString) }}
+  {{ $hookObjectName := printf "%s-%s-hook-piu-validator" .objectIdentifier (.containerPort.port | toString) }}
   {{ $hookObjectName_short := $hookObjectName | replace "-" "" }}
 ---
 
@@ -593,13 +593,12 @@ spec:
   {{ end }}
 
 
-
 {{/* -------------------------------------
      ConfigMap for Post Delete Job
 ------------------------------------------ */}}
   {{ if .root.Values.hooks.default.postDelete.validator.enabled }}
 
-    {{ $hookObjectName := printf "%s-%s-hook-postdelete-validator" .objectIdentifier (.containerPort.port | toString) }}
+    {{ $hookObjectName := printf "%s-%s-hook-pd-validator" .objectIdentifier (.containerPort.port | toString) }}
     {{ $hookObjectName_short := $hookObjectName | replace "-" "" }}
 ---
 apiVersion: v1
