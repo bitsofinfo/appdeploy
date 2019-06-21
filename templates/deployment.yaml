@@ -835,8 +835,7 @@ spec:
              defined we will inject a hookBootstrapSecretFilePath
              into hook.custom.[hookname].variables */ -}}
       {{ if $hook.bootstrapSecret }}
-        {{- $variables := dict "variables" $hook.variables }}
-        {{- $variables := set $ "hookBootstrapSecretFilePath" (printf "%s/%s" $hook.bootstrapSecret.mount.path $hook.bootstrapSecret.mount.fileName)}}
+        {{- $variables := set $hook.variables "hookBootstrapSecretFilePath" (printf "%s/%s" $hook.bootstrapSecret.mount.path $hook.bootstrapSecret.mount.fileName)}}
       {{ end }}
 
       {{- $hookBootstrapSecretName := printf "%s-%s" $fullHookName "bootstrapsecret" }}
