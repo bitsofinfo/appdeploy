@@ -890,7 +890,7 @@ spec:
 
 {{- $_ := set $podConfig "bootstrapSecretName" $hookBootstrapSecretName }}
 {{- $_ := set $podConfig "image" $hook.image }}
-{{- $_ := set $podConfig "classifier" $.Values.app.classifier }}
+{{- $_ := set $podConfig "classifier" "" }}
 
 {{ if hasKey $hook "restartPolicy" }}
   {{- $_ := set $podConfig "restartPolicy" $hook.restartPolicy }}
