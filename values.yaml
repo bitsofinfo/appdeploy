@@ -211,16 +211,11 @@ command:
 #
 # There are two subsections here
 # * "default": standard appdeploy hooks
-# * "custom": custom hooks you can define, default none
+# * "custom": custom hooks you can define, default none (see below for docs)
 #
 hooks:
 
-  # Custom jobs
-  # Optional
-  custom:
-
-
-  # Default jobs:
+  # Default chart Jobs:
   #
   # These are default chart hooks that ship w/ the chart out of the box
   # you can disable/enable them as you wish
@@ -328,3 +323,112 @@ hooks:
                     }
                 ]
               }
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Optional: You can define one or more custom hooks which will be created
+  # as k8s Jobs each additional top level key under "custom" will yield
+  # an additional Job
+  #
+  # See examples/example.yaml for a working sample
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #custom:
+
+    # the Hook Job name
+    #example:
+
+      # enabled true/false
+      #enabled: false
+
+      # Optional: variables:
+      #
+      # This is an optional structure you can use for being able to
+      # define custom values in a structured fashion that are more easily
+      # addressible via `--set` that can then be referenced via as "tpl"
+      # parsed vars in harder to customize yaml list sections such as "labels"
+      # "env" and "args" farther below.
+      #variables:
+        # You can define any structure, nested or non-nested here
+        #test:
+        #  dummy1: "dummy1val"
+        #  dummy2: "dummy2val"
+
+      # Helm hook related options
+      #hook:
+        # the value for the helm.sh/hook annotation
+        #type: pre-install,pre-upgrade
+        # the value for the helm.sh/hook-weight annotation
+        #weight: 0
+        # the value for the helm.sh/hook-delete-policy annotation
+        #deletePolicy: before-hook-creation
+
+      # Options for the Job that will be created
+      #job:
+        #backoffLimit: 0 # number of retries
+        #activeDeadlineSeconds: 300
+
+      #------------------------------------------------------
+      # The structure of the remaining options are the same as those
+      # documented at the root level of this values.yaml file
+      # and they are used to control the Job.spec.template for
+      # the Pod that will be created for the Job
+      #------------------------------------------------------
+
+      #image:
+      #  repository: "" # Required
+      #  tag: "" # Required
+
+      # Pod customization
+      #pod:
+        # tpl variable substitution supported in values here. See README
+        #labels: []
+
+      #restartPolicy: Never
+
+      #imagePullSecrets: []
+
+      #serviceAccount:
+      #  name: "default"
+      #  create: false # currently, not supported yet for Jobs. Setting true will do nothing
+
+      # tpl variable substitution supported here. See README
+      # each ENV var "value" will be PARSED by the Helm 'tpl' function
+      # You can reference ANY values.yaml var navigable via $
+      #env:
+        #ENV_VAR_1:
+        # value: "something {{.Values.app.name}}" # PARSED by Helm 'tpl' function passed $
+        #ENV_VAR_2:
+        # value: "{{.Values.hooks.custom.example.variables.test.dummy1}}"
+
+      # Optional but your chart should provide these
+      # tpl variable substitution supported here. See README
+      #command:
+        #command: ["java"] # optional
+
+        #preArgs: (optional)
+        # -"preArg1"  # PARSED by Helm 'tpl' function passed $
+
+        #args:
+        # -"{{.Values.hooks.custom.example.variables.test.dummy2}}"  # PARSED by Helm 'tpl' function passed $
+
+        #postArgs: (optional)
+        # -"postArg1"  # PARSED by Helm 'tpl' function passed $
+
+      # Options to customize the Job's bootstrapSecret secret/mount details
+      # This is optional via the flag "enabled"
+      # Note the bootstrapSecret.k8Secret.secretValue below is 'tpl' parsed
+      # so you can reference the top level secret if you'd like to re-use it:
+      # i.e secretValue: "{{.Values.bootstrapSecret.k8Secret.secretValue}}"
+      #
+      # IF enabled, a dynamic variable will be created under:
+      #   .Values.hooks.custom.[thishook].variables.hookBootstrapSecretFilePath
+      #
+      # Who's value is set = {{[thishook].bootstrapSecret.mount.path/[thishook].bootstrapSecret.mount.fileName}}
+      #
+      #bootstrapSecret:
+      #  enabled: false
+      #  k8Secret:
+      #    valueKey: "bootstrap_secret"
+      #    secretValue: "{{.Values.bootstrapSecret.k8Secret.secretValue}}"  # (tpl parsed) REQUIRED! you must provide this if enabled
+      #  mount:
+      #    path: "/opt/secrets"
+      #    fileName: "bootstrap-secret"

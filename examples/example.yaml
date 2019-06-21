@@ -1,0 +1,151 @@
+app:
+  name: myapp
+  environment: stage
+  context: stage-context1
+
+aliases:
+  - myapp-alias1
+  - myappalias2
+  - otheralias3
+
+image:
+  repository: nginx
+  tag: latest
+
+containerPorts:
+  - service: true
+    port: 80
+    name: nginx80
+    ingress: true
+    tls: false
+
+healthcheck:
+  liveness:
+    path: /
+    containerPort: 80
+    scheme: HTTP
+  readiness:
+    path: /
+    containerPort: 80
+    scheme: HTTP
+
+ingress:
+  dns:
+    fqdnSuffix: ".local"
+  metadata:
+    labels:
+      - name: "bitsofinfo-ingress"
+        value: "yes"
+    annotations:
+      - name: my-external-dns
+        value: enabled
+      - name: "kubernetes.io/ingress.class"
+        value: traefik
+
+hooks:
+
+  default:
+    postInstallUpgrade:
+      validator:
+        useIngressHost: false
+        checksConfig:
+          - name: "/"
+            path: /
+            method: GET
+            timeout: 5
+            retries: 15
+            tags: ["80"]
+    postDelete:
+      validator:
+        useIngressHost: false
+
+
+  custom:
+
+    prehook:
+      enabled: true
+      image:
+        repository: "byrnedo/alpine-curl" # Required
+        tag: "latest" # Required
+      pod:
+        labels:
+          - name: "mylabel1"
+            value: "{{.Values.app.context}}"
+      variables:
+        dummy1: "prehook dummy1 value"
+        dummy2: "prehook dummy2 value"
+      hook:
+        type: pre-install,pre-upgrade
+        weight: 0
+        deletePolicy: before-hook-creation
+      job:
+        backoffLimit: 0
+        activeDeadlineSeconds: 300
+      restartPolicy: Never
+      env:
+        SOME_VAR:
+          value: "{{.Values.hooks.custom.prehook.variables.dummy1}}"
+        ANOTHER_VAR:
+          value: "{{.Values.hooks.custom.prehook.variables.dummy2}}"
+      bootstrapSecret:
+        enabled: true
+        k8Secret:
+          valueKey: "bootstrap_secret"
+          secretValue: "\"{'text':'PRE-INSTALL HOOK FIRED: hooks.custom.prehook: variables.dummy2={{.Values.hooks.custom.prehook.variables.dummy2}}'}\""  # (tpl parsed) REQUIRED! you must provide this if enabled
+        mount:
+          path: "/opt/secrets"
+          fileName: "bootstrap-secret"
+      command:
+        command: ["curl"]
+        args:
+          - "-X"
+          - "POST"
+          - "-H"
+          - "Content-type: application/json"
+          - "--data"
+          - "@/opt/secrets/bootstrap-secret"
+          - "https://hooks.slack.com/services/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"
+
+    posthook:
+      enabled: true
+      image:
+        repository: "byrnedo/alpine-curl" # Required
+        tag: "latest" # Required
+      pod:
+        labels:
+          - name: "mylabel1"
+            value: "{{.Values.app.context}}"
+      variables:
+        dummy1: "posthook dummy1 value"
+        dummy2: "posthook dummy2 value"
+      hook:
+        type: post-install,post-upgrade
+        weight: 0
+        deletePolicy: before-hook-creation
+      job:
+        backoffLimit: 0
+        activeDeadlineSeconds: 300
+      restartPolicy: Never
+      env:
+        SOME_VAR:
+          value: "{{.Values.hooks.custom.posthook.variables.dummy1}}"
+        ANOTHER_VAR:
+          value: "{{.Values.hooks.custom.posthook.variables.dummy2}}"
+      bootstrapSecret:
+        enabled: true
+        k8Secret:
+          valueKey: "bootstrap_secret"
+          secretValue: "\"{'text':'POST-INSTALL HOOK FIRED: hooks.custom.posthook: variables.dummy1={{.Values.hooks.custom.posthook.variables.dummy1}}'}\""  # (tpl parsed) REQUIRED! you must provide this if enabled
+        mount:
+          path: "/opt/secrets"
+          fileName: "bootstrap-secret"
+      command:
+        command: ["curl"]
+        args:
+          - "-X"
+          - "POST"
+          - "-H"
+          - "Content-type: application/json"
+          - "--data"
+          - "@/opt/secrets/bootstrap-secret"
+          - "https://hooks.slack.com/services/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"

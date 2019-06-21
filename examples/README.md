@@ -19,49 +19,14 @@ helm repo add bitsofinfo-appdeploy https://raw.githubusercontent.com/bitsofinfo/
 helm repo update
 ```
 
-Lets deploy a dummy app using the chart!
+Let's deploy a dummy app using the chart!
 ```
 helm install \
   --debug \
   --namespace bitsofinfo-apps \
   --name myapp-1.0 \
-  bitsofinfo-appdeploy/appdeploy --version 1.1.0 \
-  --set image.repository="nginx" \
-  --set image.tag="latest" \
-  --set app.name="myapp" \
-  --set app.environment="stage" \
-  --set app.context="stage-context1" \
-  --set aliases[0]="myapp-alias1" \
-  --set aliases[1]="myappalias2" \
-  --set aliases[2]="otheralias3" \
-  --set containerPorts[0].service=true \
-  --set containerPorts[0].port=80 \
-  --set containerPorts[0].port=80 \
-  --set containerPorts[0].name=nginx80 \
-  --set containerPorts[0].ingress=true \
-  --set containerPorts[0].tls=false \
-  --set healthcheck.liveness.containerPort=80 \
-  --set healthcheck.liveness.path=/ \
-  --set healthcheck.liveness.scheme=HTTP \
-  --set healthcheck.readiness.containerPort=80 \
-  --set healthcheck.readiness.path=/ \
-  --set healthcheck.readiness.scheme=HTTP \
-  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].path=/ \
-  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].name="/" \
-  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].method="GET" \
-  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].timeout=5 \
-  --set hooks.default.postInstallUpgrade.validator.checksConfig[0].retries=15 \
-  --set-string hooks.default.postInstallUpgrade.validator.checksConfig[0].tags[0]=80 \
-  --set hooks.default.postInstallUpgrade.validator.useIngressHost=false \
-  --set hooks.default.postDelete.validator.useIngressHost=false \
-  --set ingress.metadata.annotations[0].name="my-external-dns" \
-  --set ingress.metadata.annotations[0].value="enabled" \
-  --set ingress.metadata.annotations[1].name="kubernetes.io/ingress.class" \
-  --set ingress.metadata.annotations[1].value="traefik" \
-  --set ingress.dns.fqdnSuffix=".local" \
-  --set ingress.metadata.labels[0].name="bitsofinfo-ingress" \
-  --set ingress.metadata.labels[0].value="yes"
-
+  bitsofinfo-appdeploy/appdeploy --version 1.1.1 \
+  -f example.yaml
 ```
 
 Wait for the install to complete:
@@ -73,9 +38,11 @@ kubectl get all -n bitsofinfo-apps
 kubectl get ingress -n bitsofinfo-apps
 
 kubectl get jobs -n bitsofinfo-apps
+
+kubectl get secrets -n bitsofinfo-apps
 ```
 
-You should see a notification in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNjY1ODIzNTkyMDMyLTEzZGUwNzExOWYyMmZmMTQyYWZiYzJjYTJkNGI3MWMzNzQ3MTE2NzVhM2Q1ZjE4OGViYjA1NGY4MzdiZDg3ZWI))
+You should see the `hooks.custom.prehook`, `hooks.custom.posthook` and `hooks.default.postInstallUpgrade` notifications in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNjY1ODIzNTkyMDMyLTEzZGUwNzExOWYyMmZmMTQyYWZiYzJjYTJkNGI3MWMzNzQ3MTE2NzVhM2Q1ZjE4OGViYjA1NGY4MzdiZDg3ZWI))
 
 Check traefik dashboard: https://bitsofinfo-traefik.test.local/dashboard/ to see the deployed backend
 
@@ -93,4 +60,4 @@ helm delete --purge myapp-1.0
 helm delete --purge bitsofinfo-traefik
 ```
 
-You should see a app delete notification in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNjY1ODIzNTkyMDMyLTEzZGUwNzExOWYyMmZmMTQyYWZiYzJjYTJkNGI3MWMzNzQ3MTE2NzVhM2Q1ZjE4OGViYjA1NGY4MzdiZDg3ZWI))
+You should see a app delete notification (`hooks.default.postDelete`) in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNjY1ODIzNTkyMDMyLTEzZGUwNzExOWYyMmZmMTQyYWZiYzJjYTJkNGI3MWMzNzQ3MTE2NzVhM2Q1ZjE4OGViYjA1NGY4MzdiZDg3ZWI))

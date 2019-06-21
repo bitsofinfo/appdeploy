@@ -1,3 +1,7 @@
+# 1.1.1
+* Support for `hooks.custom.[hookname]` Helm hook Jobs
+* Refactoring of secrets and Pod template to a golang template
+
 # 1.1.0
 * Breaking change release
 * `meta-variables` (i.e. `[[#varname]]`) are gone and just replaced with Helm `tpl` function calls where `values` (on certain keys) are just parsed as real templates, the entire `[[#varname]]` syntax is gone

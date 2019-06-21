@@ -3,7 +3,7 @@
 This is a fairly generic Helm chart that can deploy any Docker image to Kubernetes in an opinionated fashion.
 
 The chart deploys a single app in an opinionated way that adheres to the conventions described below. Whereby an "app" is defined
-as a single Docker `image:tag/version` to be deployed to a Kubernetes cluster where the app container resides in a `Pod` by itself as part of a `Deployment` and *optionally* may require a single `bootstrapSecret` to bootstrap itself. The `Pods` are accessible via a `Service` as well as a dedicated `Ingress` bound to an auto-generated "version specific" hostname that is unique to the app's `image:tag`.
+as a single Docker `image:tag/version` to be deployed to a Kubernetes cluster where the app container resides in a `Pod` by itself as part of a `Deployment` and *optionally* may require a single `bootstrapSecret` to bootstrap itself. The `Pods` are accessible via a `Service` as well as a dedicated `Ingress` bound to an auto-generated "version specific" hostname that is unique to the app's `image:tag`. The chart also optionally supports creating one or more Helm Hook `Jobs`.
 
 * [Conventions](#convention)
 * [What it does](#does)
@@ -13,6 +13,7 @@ as a single Docker `image:tag/version` to be deployed to a Kubernetes cluster wh
 * [tpl-variables](#metavar)
 * [Diagram](#diag)
 * [Examples](examples/)
+* [Custom Helm Hooks](#hooks)
 * [Using as a dependency](#dependency)
 * [Packaging/Using](#pack)
 
@@ -59,7 +60,7 @@ Depending on your `values` customizations, this Chart can produce the following 
 * **Deployment**: for the app's `Pod` specification, optionally mounting the `bootstrapSecret` and presenting as the K8s generated `ServiceAccount` above within the cluster.
 * **Service**: to access all the app's `containerPorts`
 * **Ingress**: one or more, depending on the apps `containerPorts` configuration with hostname naming convention `[appname]-[context]-[image.tag][-[classifier]][-[port]]` at the configured `ingress.dns.fqdnSuffix`
-* **Helm Hooks**: Post deploy/delete health checks (`Jobs`) and alerts to Slack as well as additional/optional arbitrary `Jobs` for doing things like migrations etc.
+* **Helm Hooks**: Post deploy/delete health checks (`Jobs`) and alerts to Slack as well as additional/optional arbitrary `Jobs` for doing things like migrations etc (i.e `hooks.custom.[hookname]` in `values.yaml`)
 
 ## <a id="doesnot"></a>What its not intended for
 
@@ -92,9 +93,12 @@ Currently the following are parsed:
 * Any `.Values.env.[name].value`
 * Any `.Values.command.args`
 * Any `service.labels.[name].value`
-* Any `deployment.template.labels.[name].value`
+* Any `pod.labels.[name].value`
 * Any `ingress.metadata.labels.[name].value`
 * Any `ingress.metadata.annotations.[name].value`
+* Any `hooks.custom.[hookname].pod.labels.[name].value`
+* Any `hooks.custom.[hookname].env.[name].value`
+* Any `hooks.custom.[hookname].command.args`
 
 You can reference any valid path relative from `.` (i.e. `$`). Some custom generated
 variables that are composed and not literally in `values.yaml`:
@@ -117,6 +121,15 @@ env:
 
 For examples see the [examples/ folder](examples/)
 
+## <a id="hooks"></a>Custom Helm Hooks
+
+The chart also permits declaring a variable number of custom [Helm Hooks](https://github.com/helm/helm/blob/master/docs/charts_hooks.md) within your `values` by declaring them under `hooks.custom.[yourhookname]`. This functionality
+is intended to be used for doing custom things w/ your deployment such as running migrations. All created
+objects are labeled and named like any of the other objects created by this chart.
+
+For further information see `hooks` in [values.yaml](values.yaml)
+
+There is also a working example in the [examples/ folder](examples/)
 
 ## <a id="dependency"></a>As a dependency in another chart
 

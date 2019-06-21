@@ -176,22 +176,24 @@ template:
         {{- end }}
       {{- end }}
   spec:
-    {{ if hasKey .podconfig "restartPolicy" }}
+    {{- if hasKey .podconfig "restartPolicy" }}
     restartPolicy: {{.podconfig.restartPolicy}}
     {{ end }}
 
-    {{ if hasKey .podconfig "serviceAccountName" }}
+    {{- if hasKey .podconfig "serviceAccountName" }}
     serviceAccountName: {{ .podconfig.serviceAccountName }}
     {{ end }}
 
-    {{ if hasKey .podconfig "imagePullSecrets" }}
+    {{- if hasKey .podconfig "imagePullSecrets" }}
     imagePullSecrets:
       {{ range $secretName := .podconfig.imagePullSecrets }}
       - name: {{ $secretName }}
       {{ end }}
     {{ end }}
-    volumes:
+
+    {{- if hasKey .podconfig "bootstrapSecret" }}
       {{ if .podconfig.bootstrapSecret.enabled }}
+    volumes:
       - name: bootstrap-secret-volume
         secret:
           secretName: {{ .podconfig.bootstrapSecretName }}
@@ -200,11 +202,13 @@ template:
             - key: {{ .podconfig.bootstrapSecret.k8Secret.valueKey }}
               path: {{ .podconfig.bootstrapSecret.mount.fileName }}
       {{ end }}
+    {{ end }}
+
     containers:
       - name: {{ .podconfig.podName }}
         image: {{ .podconfig.image.repository }}:{{ .podconfig.image.tag }}
 
-        {{ if hasKey .podconfig "securityContext" }}
+        {{- if hasKey .podconfig "securityContext" }}
         securityContext:
           {{ if hasKey .podconfig.securityContext "allowPrivilegeEscalation" }}
           allowPrivilegeEscalation: {{ .podconfig.securityContext.allowPrivilegeEscalation }}
@@ -217,14 +221,16 @@ template:
           {{ end }}
         {{ end }}
 
-        volumeMounts:
+        {{- if hasKey .podconfig "bootstrapSecret" }}
           {{ if .podconfig.bootstrapSecret.enabled }}
+        volumeMounts:
           - name: bootstrap-secret-volume
             mountPath: "{{ .podconfig.bootstrapSecret.mount.path }}"
             readOnly: true
           {{ end }}
+        {{ end }}
 
-        {{ if hasKey .podconfig "containerPorts" }}
+        {{- if hasKey .podconfig "containerPorts" }}
         ports:
           {{- range $containerPort := .podconfig.containerPorts }}
             {{- if $containerPort.classifiers }}
@@ -237,7 +243,7 @@ template:
           {{- end }}
         {{ end }}
 
-        {{ if hasKey .podconfig "resources" }}
+        {{- if hasKey .podconfig "resources" }}
         resources:
           {{ if and .podconfig.resources.limits -}}
           limits:
@@ -249,7 +255,7 @@ template:
           {{ end -}}
         {{ end }}
 
-        {{ if .podconfig.healthcheck }}
+        {{- if .podconfig.healthcheck }}
           {{ if .podconfig.healthcheck.liveness }}
             {{ if eq .podconfig.healthcheck.liveness.disabled "false" }}
         livenessProbe:
@@ -263,7 +269,7 @@ template:
           failureThreshold: {{ .podconfig.healthcheck.liveness.failureThreshold }}
             {{ end }}
           {{ end }}
-          {{ if .podconfig.healthcheck.readiness }}
+          {{- if .podconfig.healthcheck.readiness }}
             {{ if eq .podconfig.healthcheck.readiness.disabled "false" }}
         readinessProbe:
           httpGet:
@@ -823,8 +829,13 @@ spec:
 
       {{- $fullHookName := printf "%s-hook-%s" $.fullAppIdentifier $hookName }}
 
-      {{- $variables := dict "variables" $hook.variables }}
-      {{- $variables := set $ "hookBootstrapSecretFilePath" (printf "%s/%s" $hook.bootstrapSecret.mount.path $hook.bootstrapSecret.mount.fileName)}}
+      {{- /* If the custom hook has a bootstrapSecret
+             defined we will inject a hookBootstrapSecretFilePath
+             into hook.custom.[hookname].variables */ -}}
+      {{ if $hook.bootstrapSecret }}
+        {{- $variables := dict "variables" $hook.variables }}
+        {{- $variables := set $ "hookBootstrapSecretFilePath" (printf "%s/%s" $hook.bootstrapSecret.mount.path $hook.bootstrapSecret.mount.fileName)}}
+      {{ end }}
 
       {{- $hookBootstrapSecretName := printf "%s-%s" $fullHookName "bootstrapsecret" }}
 
@@ -841,16 +852,18 @@ spec:
     Note: the annotation for "helm.sh/hook-weight" is forced to -100
     as secrets must be created prior to jobs...
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */}}
-  {{ if $hook.bootstrapSecret.enabled }}
+  {{ if $hook.bootstrapSecret }}
+    {{ if $hook.bootstrapSecret.enabled }}
 
-    {{ $evaluatedSecretValue := tpl $hook.bootstrapSecret.k8Secret.secretValue $ }}
-    {{- $_ := set $hook.bootstrapSecret.k8Secret "secretValue" $evaluatedSecretValue }}
+      {{ $evaluatedSecretValue := tpl $hook.bootstrapSecret.k8Secret.secretValue $ }}
+      {{- $_ := set $hook.bootstrapSecret.k8Secret "secretValue" $evaluatedSecretValue }}
 
-    {{- $secretargs := dict "root" $ "bootstrapSecretName" $hookBootstrapSecretName "bootstrapSecret" $hook.bootstrapSecret }}
-    {{- $_ := set $secretargs "annotations" (dict "helm.sh/hook" $hook.hook.type "helm.sh/hook-weight" "-100" "helm.sh/hook-delete-policy" $hook.hook.deletePolicy) }}
+      {{- $secretargs := dict "root" $ "bootstrapSecretName" $hookBootstrapSecretName "bootstrapSecret" $hook.bootstrapSecret }}
+      {{- $_ := set $secretargs "annotations" (dict "helm.sh/hook" $hook.hook.type "helm.sh/hook-weight" "-100" "helm.sh/hook-delete-policy" $hook.hook.deletePolicy) }}
 
 {{ include "secret.tpl" $secretargs }}
 
+    {{ end }}
   {{ end }}
 
 
@@ -872,30 +885,50 @@ spec:
 
 {{- $podConfig := dict "podName" $fullHookName }}
 {{- $podTemplateArgs := dict "root" $ "podconfig" $podConfig }}
-{{- $_ := set $podConfig "serviceAccountName" $hook.serviceAccount.name }}
+
 {{- $_ := set $podConfig "bootstrapSecretName" $hookBootstrapSecretName }}
 {{- $_ := set $podConfig "image" $hook.image }}
-{{- $_ := set $podConfig "restartPolicy" $hook.restartPolicy }}
-{{- $_ := set $podConfig "imagePullSecrets" $hook.imagePullSecrets }}
-{{- $_ := set $podConfig "bootstrapSecret" $hook.bootstrapSecret }}
+
+{{ if hasKey $hook "restartPolicy" }}
+  {{- $_ := set $podConfig "restartPolicy" $hook.restartPolicy }}
+{{ end }}
+
+{{ if hasKey $hook "imagePullSecrets" }}
+  {{- $_ := set $podConfig "imagePullSecrets" $hook.imagePullSecrets }}
+{{ end }}
+
+{{ if hasKey $hook "serviceAccount" }}
+  {{- $_ := set $podConfig "serviceAccountName" $hook.serviceAccount.name }}
+{{ end }}
+
+{{ if hasKey $hook "bootstrapSecret" }}
+  {{- $_ := set $podConfig "bootstrapSecret" $hook.bootstrapSecret }}
+{{ end }}
+
 {{ if hasKey $hook "pod" }}
   {{- $_ := set $podConfig "labels" $hook.pod.labels }}
 {{ end }}
+
 {{ if hasKey $hook "securityContext" }}
   {{- $_ := set $podConfig "securityContext" $hook.securityContext }}
 {{ end }}
+
 {{ if hasKey $hook "containerPorts" }}
   {{- $_ := set $podConfig "containerPorts" $hook.containerPorts }}
 {{ end }}
+
 {{ if hasKey $hook "resources" }}
   {{- $_ := set $podConfig "resources" $hook.resources }}
 {{ end }}
+
 {{ if hasKey $hook "healthcheck" }}
   {{- $_ := set $podConfig "healthcheck" $hook.healthcheck }}
 {{ end }}
+
 {{ if hasKey $hook "env" }}
   {{- $_ := set $podConfig "env" $hook.env }}
 {{ end }}
+
 {{ if hasKey $hook "command" }}
   {{- $_ := set $podConfig "command" $hook.command }}
 {{ end }}
