@@ -148,6 +148,7 @@ stringData:
         podName: (should be generated and set by caller)
         serviceAccountName: (should be generated and set by caller)
         bootstrapSecretName: (should be generated and set by caller)
+        classifier: (should be set = app.classifier)
 
         labels: (typically from pod.labels )
 
@@ -234,7 +235,7 @@ template:
         ports:
           {{- range $containerPort := .podconfig.containerPorts }}
             {{- if $containerPort.classifiers }}
-              {{- if has $.Values.app.classifier $containerPort.classifiers }}
+              {{- if has .podconfig.app.classifier $containerPort.classifiers }}
           - containerPort: {{ $containerPort.port }}
               {{- end }}
             {{- else }}

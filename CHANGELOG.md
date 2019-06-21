@@ -1,3 +1,6 @@
+# 1.1.2
+* Fix #6
+
 # 1.1.1
 * Support for `hooks.custom.[hookname]` Helm hook Jobs
 * Refactoring of secrets and Pod template to a golang template
