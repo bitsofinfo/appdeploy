@@ -246,9 +246,7 @@ hooks:
         slackConfig:
           postDeploy:
             name: "post-deploy"
-            # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
-            # the #bitsofinfo-dev channel
-            webhook_url: https://hooks.slack.com/services/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
+            webhook_url: https://hooks.slack.com/services/YOU/NEED/TO/PROVIDE
             template: >
               {
                 "text":"*Deployed:* {{ check_name }} *{{ 'OK' if overall_result else 'FAILED' }}* ",
@@ -306,9 +304,7 @@ hooks:
         slackConfig:
           postDelete:
             name: "post-delete"
-            # Example hook posts to: https://bitsofinfo.slack.com/messages/CE46Z3TJA/
-            # the #bitsofinfo-dev channel
-            webhook_url: https://hooks.slack.com/services/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
+            webhook_url: https://hooks.slack.com/services/YOU/NEED/TO/PROVIDE
             template: >
               {
                 "text":"*Removed:* {{ check_name }} *{{ 'OK' if overall_result else 'FAILED' }}* ",

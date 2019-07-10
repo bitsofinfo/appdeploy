@@ -55,10 +55,17 @@ hooks:
             timeout: 5
             retries: 15
             tags: ["80"]
+        slackConfig:
+          postDeploy:
+            # INTENTIONALLY public for this example!
+            webhook_url: "https://hooks.slack.com/services/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"
     postDelete:
       validator:
         useIngressHost: false
-
+        slackConfig:
+          postDelete:
+            # INTENTIONALLY public for this example!
+            webhook_url: "https://hooks.slack.com/services/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"
 
   custom:
 
@@ -104,7 +111,8 @@ hooks:
           - "Content-type: application/json"
           - "--data"
           - "@/opt/secrets/bootstrap-secret"
-          - "https://hooks.slack.com/services/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"
+          # INTENTIONALLY public for this example!
+          - "https://hooks.slack.com/services/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"
 
     posthook:
       enabled: true
@@ -148,4 +156,5 @@ hooks:
           - "Content-type: application/json"
           - "--data"
           - "@/opt/secrets/bootstrap-secret"
-          - "https://hooks.slack.com/services/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"
+          # INTENTIONALLY public for this example! 
+          - "https://hooks.slack.com/services/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"

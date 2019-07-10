@@ -1,3 +1,6 @@
+# 1.1.5
+* Remove webhook from default values, put in example only
+
 # 1.1.4
 * Fix #8
 
