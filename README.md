@@ -16,6 +16,7 @@ as a single Docker `image:tag/version` to be deployed to a Kubernetes cluster wh
 * [Custom Helm Hooks](#hooks)
 * [Using as a dependency](#dependency)
 * [Packaging/Using](#pack)
+* [Related projects](#related)
 
 # <a id="convention"></a>Conventions
 
