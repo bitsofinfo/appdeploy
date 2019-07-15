@@ -191,3 +191,8 @@ dependencies:
   version: "1.1.5"
   repository: "https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo"
 ```
+
+# <a id="related"></a>Related Projects
+
+* [appdeploy](https://github.com/bitsofinfo/appdeploy)
+* [helmfile-deploy](https://github.com/bitsofinfo/helmfile-deploy)
