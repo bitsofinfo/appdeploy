@@ -194,5 +194,5 @@ dependencies:
 
 # <a id="related"></a>Related Projects
 
-* [appdeploy](https://github.com/bitsofinfo/appdeploy)
+* [appconduits](https://github.com/bitsofinfo/appconduits)
 * [helmfile-deploy](https://github.com/bitsofinfo/helmfile-deploy)
