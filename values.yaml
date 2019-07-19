@@ -126,16 +126,30 @@ service:
 
 # Options to customize the generated version specific Ingresses (one per port)
 # NOTE! if you want to deploy your own "isolated" version specific app instance
-# that does not collide with any others, simply tweak the fqdnSuffix:
+# that does not collide with any others, simply tweak the fqdnSuffix. You can
+# also optionally declare the fqdnSuffixPrefix to acheive a similar result but
+# with a different level of configurability which gives different options if you
+# are using this with higher level tooling where values decoration might vary based
+# on target cluster being deployed for instance.
 #
-# i.e. ingress.dns.fqdnSuffix="-[unique-tag].local"
+# given a "fullAppIdentifier" that gets generated as:
+#      appName-context-version-classifier
+#
+# required:
+#   ingress.dns.fqdnSuffix="-x.local"
+#     would yield: appName-context-version-classifier-x.local
+#
+# optional:
+#   ingress.dns.fqdnSuffixPrefix="-something"
+#     would yield: appName-context-version-classifier-something-x.local
 #
 ingress:
   dns:
     fqdnSuffix: ".local"
+    fqdnSuffixPrefix: "" # default nothing, this is pre-pended to the fqdnSuffix
   tls:
     enabled: false
-    secretName: ""
+    secretName: "" # you need to set this!
   metadata:
     # tpl variable substitution supported in values here. See README
     labels: []

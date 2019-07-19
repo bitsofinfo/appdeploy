@@ -559,13 +559,13 @@ spec:
           args:
             - "--check-name"
             {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
-            - "{{ printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}"
+            - "{{ printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
             - "{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
             - "--target-root-url"
             {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
-            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}"
+            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
             - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
@@ -653,13 +653,13 @@ spec:
           args:
             - "--check-name"
             {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
-            - "{{ printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}"
+            - "{{ printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
             - "{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
             - "--target-root-url"
             {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
-            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}"
+            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
             - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
@@ -703,7 +703,7 @@ spec:
 ---------------------------------------------------------------------- */}}
 {{- define "ingress.template" }}
 
-{{- $ingressFqdn := printf "%s-%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffix }}
+{{- $ingressFqdn := printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}
 ---
 # Version specific Ingress (one per port)
 apiVersion: extensions/v1beta1
