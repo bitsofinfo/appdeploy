@@ -198,7 +198,7 @@ template:
       - name: bootstrap-secret-volume
         secret:
           secretName: {{ .podconfig.bootstrapSecretName }}
-          defaultMode: 256
+          defaultMode: {{ .podconfig.bootstrapSecret.mount.defaultMode }}
           items:
             - key: {{ .podconfig.bootstrapSecret.k8Secret.valueKey }}
               path: {{ .podconfig.bootstrapSecret.mount.fileName }}
@@ -219,6 +219,9 @@ template:
           {{ end }}
           {{ if .podconfig.securityContext.runAsGroup }}
           runAsGroup: {{ .podconfig.securityContext.runAsGroup }}
+          {{ end }}
+          {{ if .podconfig.securityContext.fsGroup }}
+          fsGroup: {{ .podconfig.securityContext.fsGroup }}
           {{ end }}
         {{ end }}
 

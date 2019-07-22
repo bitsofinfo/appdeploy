@@ -1,3 +1,7 @@
+# 1.1.7
+* Added `bootstrapSecret.mount.defaultMode`
+* Added `securityContext.fsGroup`
+
 # 1.1.6
 * Added `ingress.dns.fqdnSuffixPrefix`
 

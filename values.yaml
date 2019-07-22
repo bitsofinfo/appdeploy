@@ -80,6 +80,7 @@ securityContext:
   allowPrivilegeEscalation: false
   #runAsUser: 9999
   #runAsGroup: 9999
+  #fsGroup: 9999
 
 # Optional: The k8s secret name to be used if the Deployment object
 # needs to pull images (i.e. if your image.repository is custom)
@@ -168,6 +169,7 @@ bootstrapSecret:
     valueKey: "bootstrap_secret"
     secretValue: ""  # REQUIRED! you must provide this if enabled
   mount:
+    defaultMode: 256 # 0400
     path: "/opt/secrets"
     fileName: "bootstrap-secret"
 
