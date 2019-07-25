@@ -100,6 +100,7 @@ hooks:
           valueKey: "bootstrap_secret"
           secretValue: "\"{'text':'PRE-INSTALL HOOK FIRED: hooks.custom.prehook: variables.dummy2={{.Values.hooks.custom.prehook.variables.dummy2}}'}\""  # (tpl parsed) REQUIRED! you must provide this if enabled
         mount:
+          defaultMode: 256 # 0400
           path: "/opt/secrets"
           fileName: "bootstrap-secret"
       command:
@@ -145,6 +146,7 @@ hooks:
           valueKey: "bootstrap_secret"
           secretValue: "\"{'text':'POST-INSTALL HOOK FIRED: hooks.custom.posthook: variables.dummy1={{.Values.hooks.custom.posthook.variables.dummy1}}'}\""  # (tpl parsed) REQUIRED! you must provide this if enabled
         mount:
+          defaultMode: 256 # 0400
           path: "/opt/secrets"
           fileName: "bootstrap-secret"
       command:
@@ -156,5 +158,5 @@ hooks:
           - "Content-type: application/json"
           - "--data"
           - "@/opt/secrets/bootstrap-secret"
-          # INTENTIONALLY public for this example! 
+          # INTENTIONALLY public for this example!
           - "https://hooks.slack.com/services/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"

@@ -442,5 +442,6 @@ hooks:
       #    valueKey: "bootstrap_secret"
       #    secretValue: "{{.Values.bootstrapSecret.k8Secret.secretValue}}"  # (tpl parsed) REQUIRED! you must provide this if enabled
       #  mount:
+      #    defaultMode: 256 # 0400
       #    path: "/opt/secrets"
       #    fileName: "bootstrap-secret"
