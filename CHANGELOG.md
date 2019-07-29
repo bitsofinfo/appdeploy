@@ -1,3 +1,6 @@
+# 1.1.8
+* Fix `postDelete` and `postInstallUpgrade` http(s) schemes if `useIngressHost: true`
+
 # 1.1.7
 * Added `bootstrapSecret.mount.defaultMode`
 * Added `securityContext.fsGroup`

@@ -555,7 +555,7 @@ spec:
           configMap:
             name: {{ $hookObjectName }}
       containers:
-        - name: {{ regexReplaceAll "[\\._/:]" .root.Values.hooks.default.postDelete.validator.image "-" }}
+        - name: {{ regexReplaceAll "[\\._/:]" .root.Values.hooks.default.postInstallUpgrade.validator.image "-" }}
           image: "{{ .root.Values.hooks.default.postInstallUpgrade.validator.image }}"
           command:
             - "checker.py"
@@ -568,7 +568,7 @@ spec:
             {{ end }}
             - "--target-root-url"
             {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
-            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}"
+            - "{{ .root.Values.ingress.tls.enabled | ternary "https" "http" }}://{{ printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
             - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
@@ -662,7 +662,7 @@ spec:
             {{ end }}
             - "--target-root-url"
             {{ if .root.Values.hooks.default.postInstallUpgrade.validator.useIngressHost }}
-            - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}"
+            - "{{ .root.Values.ingress.tls.enabled | ternary "https" "http" }}://{{ printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}"
             {{ else }}
             - "{{ .containerPort.tls | ternary "https" "http" }}://{{ printf "%s.%s.svc.cluster.local:%s" .objectIdentifier .root.Release.Namespace (.containerPort.port | toString) }}"
             {{ end }}
