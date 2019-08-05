@@ -1,6 +1,6 @@
 # Example
 
-Below is a basic example that you can deploy anything w/ this chart. In this case we don't utilize the `bootstrapSecret` as its not necessary for this demo. Post deploy/delete alerts will be sent to the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNjY1ODIzNTkyMDMyLTEzZGUwNzExOWYyMmZmMTQyYWZiYzJjYTJkNGI3MWMzNzQ3MTE2NzVhM2Q1ZjE4OGViYjA1NGY4MzdiZDg3ZWI))
+Below is a basic example that you can deploy anything w/ this chart. In this case we don't utilize the `bootstrapSecret` as its not necessary for this demo. Post deploy/delete alerts will be sent to the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNzE1OTM1MDY5MDYwLTk4MTc3MjA4Y2YwNjFkYjRlYjZjZWMyNWExY2QxN2JmMmMyOGViMzYzYmE5NjcyOGE5ZWFjYTM5MmVjNzUxMjc))
 
 This should be enough to get your feet wet.
 
@@ -42,7 +42,7 @@ kubectl get jobs -n bitsofinfo-apps
 kubectl get secrets -n bitsofinfo-apps
 ```
 
-You should see the `hooks.custom.prehook`, `hooks.custom.posthook` and `hooks.default.postInstallUpgrade` notifications in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNjY1ODIzNTkyMDMyLTEzZGUwNzExOWYyMmZmMTQyYWZiYzJjYTJkNGI3MWMzNzQ3MTE2NzVhM2Q1ZjE4OGViYjA1NGY4MzdiZDg3ZWI))
+You should see the `hooks.custom.prehook`, `hooks.custom.posthook` and `hooks.default.postInstallUpgrade` notifications in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNzE1OTM1MDY5MDYwLTk4MTc3MjA4Y2YwNjFkYjRlYjZjZWMyNWExY2QxN2JmMmMyOGViMzYzYmE5NjcyOGE5ZWFjYTM5MmVjNzUxMjc))
 
 Check traefik dashboard: https://bitsofinfo-traefik.test.local/dashboard/ to see the deployed backend
 
@@ -60,4 +60,4 @@ helm delete --purge myapp-1.0
 helm delete --purge bitsofinfo-traefik
 ```
 
-You should see a app delete notification (`hooks.default.postDelete`) in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNjY1ODIzNTkyMDMyLTEzZGUwNzExOWYyMmZmMTQyYWZiYzJjYTJkNGI3MWMzNzQ3MTE2NzVhM2Q1ZjE4OGViYjA1NGY4MzdiZDg3ZWI))
+You should see a app delete notification (`hooks.default.postDelete`) in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNzE1OTM1MDY5MDYwLTk4MTc3MjA4Y2YwNjFkYjRlYjZjZWMyNWExY2QxN2JmMmMyOGViMzYzYmE5NjcyOGE5ZWFjYTM5MmVjNzUxMjc))
