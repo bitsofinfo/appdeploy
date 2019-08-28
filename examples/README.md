@@ -8,7 +8,7 @@ This should be enough to get your feet wet.
 
 Add to your local `/etc/hosts` (unless you have DNS setup)
 ```
-[bitsofinfo-traefik-controller-lb-ip] bitsofinfo-traefik.test.local myapp-stage-context1-latest-80.local
+[bitsofinfo-traefik-controller-lb-ip] bitsofinfo-traefik.test.local myapp-stage-context1-latest-80.local myapp-alias1-stage-context1-latest-80.local myappalias2-stage-context1-latest-80.local otheralias3-stage-context1-latest-80.local
 ```
 
 **IMPORTANT!**: Before we continue we need to setup an `IngressController` [lets use Traefik, click here for setup instructions](TRAEFIK_SETUP.md)
