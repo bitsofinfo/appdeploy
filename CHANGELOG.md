@@ -1,3 +1,6 @@
+# 1.1.9
+* **BREAKING CHANGE:** Changed `ingress.metadata.annotations` and `ingress.metadata.labels` from a list to key-value pairs
+
 # 1.1.8
 * Fix `postDelete` and `postInstallUpgrade` http(s) schemes if `useIngressHost: true`
 

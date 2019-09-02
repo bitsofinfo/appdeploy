@@ -34,12 +34,12 @@ ingress:
     fqdnSuffix: ".local"
   metadata:
     labels:
-      - name: "bitsofinfo-ingress"
+      bitsofinfo-ingress:
         value: "yes"
     annotations:
-      - name: my-external-dns
+      my-external-dns:
         value: enabled
-      - name: "kubernetes.io/ingress.class"
+      kubernetes.io/ingress.class:
         value: traefik
 
 hooks:
