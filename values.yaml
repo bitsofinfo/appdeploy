@@ -154,15 +154,11 @@ ingress:
   metadata:
     # tpl variable substitution supported in values here. See README
     labels:
-      #"label/name1":
-      #  value: "something" # PARSED by Helm 'tpl' function passed $
-      #labelName2:
-      #  value: "something" # PARSED by Helm 'tpl' function passed $
+      #"label/name1": "something" # PARSED by Helm 'tpl' function passed $
+      #labelName2: "something" # PARSED by Helm 'tpl' function passed $
     annotations:
-      #"annotation/name1":
-      #  value: "something" # PARSED by Helm 'tpl' function passed $
-      #annotationName2:
-      #  value: "something" # PARSED by Helm 'tpl' function passed $
+      #"annotation/name1": "something" # PARSED by Helm 'tpl' function passed $
+      #annotationName2: "something" # PARSED by Helm 'tpl' function passed $
 
 # Options to customize the bootstrapSecret secret/mount details
 # This is optional via the flag "enabled"

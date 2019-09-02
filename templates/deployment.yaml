@@ -720,7 +720,7 @@ metadata:
     {{ if .root.Values.ingress.metadata.labels }}
       {{- $root := .root }}
       {{- range $labelName,$labelValue := .root.Values.ingress.metadata.labels }}
-    "{{ $labelName }}": "{{ tpl $labelValue.value $root }}"
+    "{{ $labelName }}": "{{ tpl $labelValue $root }}"
       {{- end }}
     {{ end }}
   annotations:
@@ -733,7 +733,7 @@ metadata:
     {{ if .root.Values.ingress.metadata.annotations }}
       {{- $root := .root }}
       {{- range $annotationName,$annotationValue := .root.Values.ingress.metadata.annotations }}
-    "{{ $annotationName }}": "{{ tpl $annotationValue.value $root }}"
+    "{{ $annotationName }}": "{{ tpl $annotationValue $root }}"
       {{- end }}
     {{ end }}
 
