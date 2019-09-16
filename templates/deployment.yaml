@@ -590,6 +590,9 @@ spec:
             - "--verbose-output"
             - "--debug-slack-jinja2-context"
             {{ end }}
+            {{ if .root.Values.hooks.default.postDelete.validator.debugRequests }}
+            - "--verbose-debug-requests"
+            {{ end }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/hc-config
@@ -681,6 +684,9 @@ spec:
             {{ if .root.Values.hooks.default.postDelete.validator.debugOutput }}
             - "--verbose-output"
             - "--debug-slack-jinja2-context"
+            {{ end }}
+            {{ if .root.Values.hooks.default.postDelete.validator.debugRequests }}
+            - "--verbose-debug-requests"
             {{ end }}
           volumeMounts:
             - name: config-volume

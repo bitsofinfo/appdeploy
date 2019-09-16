@@ -175,9 +175,9 @@ bootstrapSecret:
 # Resources customization
 resources:
   limits:
-    cpu: "1"
+#    cpu: "1" # example only
   requests:
-    cpu: ".25"
+#    cpu: ".25" # example only
 
 
 # Healthcheck customization
@@ -246,11 +246,12 @@ hooks:
         # if false, will use k8s service name
         # [fullAppIdentifier].[.Release.Namespace].svc.cluster.local:[port] and NOT go via Ingress
         useIngressHost: true
-        image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
+        image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.19"
         maxRetries: 60
         sleepSeconds: 30
         hookDeletePolicy: hook-succeeded,before-hook-creation
-        debugOutput: false # enables very verbose logging to aid in debugging
+        debugOutput: false # enables very verbose logging of all result objects to aid in debugging
+        debugRequests: false # enables very verbose request/response logging to aid in debugging
         checksConfig:
           - name: "/health check"
             path: "/health"
@@ -299,11 +300,12 @@ hooks:
         # if false, will use k8s service name
         # [fullAppIdentifier].[.Release.Namespace].svc.cluster.local:[port] and NOT go via Ingress
         useIngressHost: true
-        image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.18"
+        image: "bitsofinfo/kubernetes-helm-healthcheck-hook:0.1.19"
         maxRetries: 60
         sleepSeconds: 30
         hookDeletePolicy: hook-succeeded,before-hook-creation
-        debugOutput: false # enables very verbose logging to aid in debugging
+        debugOutput: false # enables very verbose logging of all result objects to aid in debugging
+        debugRequests: false # enables very verbose request/response logging to aid in debugging
         checksConfig:
           - name: "/ post delete check"
             path: "/"

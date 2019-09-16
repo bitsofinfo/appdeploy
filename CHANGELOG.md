@@ -1,3 +1,9 @@
+# 1.1.10
+* Upgraded to `kubernetes-helm-healthcheck:0.1.19`
+* + `hooks.default.[postInstallUpgrade|postDelete].validator.debugRequests` that corresponds
+to `kubernetes-helm-healthcheck:0.1.19` new `--verbose-debug-requests` argument
+* Removed all default `resources.[limits|requests]` settings in `values.yaml`
+
 # 1.1.9
 * **BREAKING CHANGE:** Changed `ingress.metadata.annotations` and `ingress.metadata.labels` from a list to key-value pairs
 
