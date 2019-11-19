@@ -163,6 +163,8 @@ stringData:
         healthcheck:
         env:
         command:
+        hostname: 
+        subdomain: 
 --------------------------------------------------------------- */}}
 {{- define "podtemplate.tpl" }}
 {{ $root := .root }}
@@ -177,6 +179,19 @@ template:
         {{- end }}
       {{- end }}
   spec:
+
+    {{- if hasKey .podconfig "hostname" }}
+      {{- if .podconfig.hostname }}
+    hostname: {{ tpl .podconfig.hostname $root}}
+      {{- end }}
+    {{ end }}
+
+    {{- if hasKey .podconfig "subdomain" }}
+      {{- if .podconfig.subdomain }}
+    subdomain: {{ tpl .podconfig.subdomain $root}}
+      {{- end }}
+    {{ end }}
+
     {{- if hasKey .podconfig "restartPolicy" }}
     restartPolicy: {{.podconfig.restartPolicy}}
     {{ end }}
@@ -441,6 +456,12 @@ spec:
 {{- $_ := set $podConfig "healthcheck" .Values.healthcheck }}
 {{- $_ := set $podConfig "env" .Values.env }}
 {{- $_ := set $podConfig "command" .Values.command }}
+{{- if hasKey .Values "hostname" }}
+  {{- $_ := set $podConfig "hostname" .Values.hostname }}
+{{- end }}
+{{- if hasKey .Values "subdomain" }}
+  {{- $_ := set $podConfig "subdomain" .Values.subdomain }}
+{{- end }}
 {{ include "podtemplate.tpl" $podTemplateArgs | indent 2 }}
 
 
@@ -490,6 +511,54 @@ spec:
 
 
 
+
+{{- /* ---------------------------------------------------------------
+      OPTIONAL: "extra" Service object (i.e. extraService.*)
+---------------------------------------------------------------------- */}}
+{{ if .Values.extraService.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: "{{ $.Release.Namespace }}"
+  name: "{{ tpl .Values.extraService.name $}}"
+  labels:
+    {{ include "stdlabels.tpl" $.stdlabelsargs | indent 4 }}
+
+    {{- range $label := .Values.extraService.labels }}
+    "{{ tpl $label.name $ }}": "{{ tpl $label.value $ }}"
+    {{- end }}
+spec:
+  selector:
+    {{- range $selector := .Values.extraService.selectors }}
+    "{{ tpl $selector.name $ }}": "{{ tpl $selector.value $ }}"
+    {{- end }}
+  {{ if eq .Values.extraService.type "Headless" }}
+  type: ClusterIP
+  clusterIP: None
+  {{ else }}
+  type: {{ .Values.extraService.type }}
+  {{ end }}
+  ports:
+  {{- range $containerPort := .Values.containerPorts }}
+    {{- if $containerPort.service }}
+      {{- if $containerPort.classifiers }}
+        {{- if has $.Values.app.classifier $containerPort.classifiers }}
+  - protocol: TCP
+    name: {{ $containerPort.name }}
+    port: {{ $containerPort.port }}
+    targetPort: {{ $containerPort.port }}
+        {{ end -}}
+      {{ else }}
+  - protocol: TCP
+    name: {{ $containerPort.name }}
+    port: {{ $containerPort.port }}
+    targetPort: {{ $containerPort.port }}
+      {{ end -}}
+    {{ end -}}
+  {{- end }}
+
+{{- end }}
 
 
 
@@ -899,6 +968,14 @@ spec:
 {{- $_ := set $podConfig "bootstrapSecretName" $hookBootstrapSecretName }}
 {{- $_ := set $podConfig "image" $hook.image }}
 {{- $_ := set $podConfig "classifier" "" }}
+
+{{- if hasKey $hook "hostname" }}
+  {{- $_ := set $podConfig "hostname" $hook.hostname }}
+{{- end }}
+
+{{- if hasKey $hook "subdomain" }}
+  {{- $_ := set $podConfig "subdomain" $hook.subdomain }}
+{{- end }}
 
 {{ if hasKey $hook "restartPolicy" }}
   {{- $_ := set $podConfig "restartPolicy" $hook.restartPolicy }}

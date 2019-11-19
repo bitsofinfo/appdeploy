@@ -12,6 +12,9 @@ image:
   repository: nginx
   tag: latest
 
+extraService:
+  enabled: true # optional!
+
 containerPorts:
   - service: true
     port: 80

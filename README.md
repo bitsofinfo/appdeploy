@@ -94,7 +94,12 @@ Currently the following are parsed:
 * Any `.Values.env.[name].value`
 * Any `.Values.command.args`
 * Any `service.labels.[name].value`
+* The `extraService.name`
+* Any `extraService.labels.[name|value]`
+* Any `extraService.selectors.[name|value]`
 * Any `pod.labels.[name].value`
+* The `pod.hostname`
+* The `pod.subdomain`
 * Any `ingress.metadata.labels.[name].value`
 * Any `ingress.metadata.annotations.[name].value`
 * Any `hooks.custom.[hookname].pod.labels.[name].value`
@@ -189,7 +194,7 @@ helm repo update
 # requirements.yaml
 dependencies:
 - name: appdeploy
-  version: "1.1.9"
+  version: "1.1.11"
   repository: "https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo"
 ```
 
