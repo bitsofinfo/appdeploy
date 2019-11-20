@@ -97,6 +97,7 @@ Currently the following are parsed:
 * The `extraService.name`
 * Any `extraService.labels.[name|value]`
 * Any `extraService.selectors.[name|value]`
+* Any `extraService.annotations.[name|value]`
 * Any `pod.labels.[name].value`
 * The `pod.hostname`
 * The `pod.subdomain`
@@ -194,7 +195,7 @@ helm repo update
 # requirements.yaml
 dependencies:
 - name: appdeploy
-  version: "1.1.11"
+  version: "1.1.12"
   repository: "https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo"
 ```
 

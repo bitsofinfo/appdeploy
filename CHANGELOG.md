@@ -1,3 +1,6 @@
+# 1.1.12
+* Added `extraService.annotations` support w/ `tpl` support
+
 # 1.1.11
 * Added `pod.hostname` and `pod.subdomain` with `tpl` substitution support
 * Added `extraService.*` section to permit configuration of an secondary `Service` with completely custom `selectors, name, labels, type` etc

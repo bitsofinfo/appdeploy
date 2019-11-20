@@ -528,6 +528,12 @@ metadata:
     {{- range $label := .Values.extraService.labels }}
     "{{ tpl $label.name $ }}": "{{ tpl $label.value $ }}"
     {{- end }}
+  annotations:
+    {{ if .Values.extraService.annotations }}
+      {{- range $annotationName,$annotationValue := .Values.extraService.annotations }}
+    "{{ tpl $annotationName $ }}": "{{ tpl $annotationValue $ }}"
+      {{- end }}
+    {{ end }}
 spec:
   selector:
     {{- range $selector := .Values.extraService.selectors }}
