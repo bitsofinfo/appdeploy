@@ -25,7 +25,7 @@ helm install \
   --debug \
   --namespace bitsofinfo-apps \
   --name myapp-1.0 \
-  bitsofinfo-appdeploy/appdeploy --version 1.1.12 \
+  bitsofinfo-appdeploy/appdeploy --version 1.1.13 \
   -f example.yaml
 ```
 

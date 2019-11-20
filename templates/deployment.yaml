@@ -222,7 +222,7 @@ template:
 
     containers:
       - name: {{ .podconfig.podName }}
-        image: {{ .podconfig.image.repository }}:{{ .podconfig.image.tag }}
+        image: {{ tpl .podconfig.image.repository $root }}:{{ tpl .podconfig.image.tag $root }}
 
         {{- if hasKey .podconfig "securityContext" }}
         securityContext:
