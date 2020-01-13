@@ -1,6 +1,9 @@
+# 1.1.14
+* Added `resources.limits.memory` and `resources.requests.memory` in podtemplate
+
 # 1.1.13
 * Added `tpl` support for `image.repository` and `image.tag`
-  
+
 # 1.1.12
 * Added `extraService.annotations` support w/ `tpl` support
 
