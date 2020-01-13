@@ -273,7 +273,7 @@ template:
             {{ if .podconfig.resources.limits.memory -}}
             memory: "{{ .podconfig.resources.limits.memory }}"
             {{ end -}}
-          {{ end -}}
+          {{ end }}
           {{ if .podconfig.resources.requests -}}
           requests:
             {{ if .podconfig.resources.requests.cpu -}}
