@@ -163,8 +163,8 @@ stringData:
         healthcheck:
         env:
         command:
-        hostname: 
-        subdomain: 
+        hostname:
+        subdomain:
 --------------------------------------------------------------- */}}
 {{- define "podtemplate.tpl" }}
 {{ $root := .root }}
@@ -265,13 +265,23 @@ template:
 
         {{- if hasKey .podconfig "resources" }}
         resources:
-          {{ if and .podconfig.resources.limits -}}
+          {{ if .podconfig.resources.limits -}}
           limits:
+            {{ if .podconfig.resources.limits.cpu -}}
             cpu: "{{ .podconfig.resources.limits.cpu }}"
+            {{ end -}}
+            {{ if .podconfig.resources.limits.memory -}}
+            memory: "{{ .podconfig.resources.limits.memory }}"
+            {{ end -}}
           {{ end -}}
-          {{ if and .podconfig.resources.requests -}}
+          {{ if .podconfig.resources.requests -}}
           requests:
+            {{ if .podconfig.resources.requests.cpu -}}
             cpu: "{{ .podconfig.resources.requests.cpu }}"
+            {{ end -}}
+            {{ if .podconfig.resources.requests.memory -}}
+            memory: "{{ .podconfig.resources.requests.memory }}"
+            {{ end -}}
           {{ end -}}
         {{ end }}
 
