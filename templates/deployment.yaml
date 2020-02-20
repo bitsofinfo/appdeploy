@@ -884,7 +884,7 @@ spec:
              NOTE! we replace via app.shortName match, why? see fullAppIdentifier 
              var construction @ ~line 42 */}}
         {{ range $alias := $.Values.aliases }}
-          {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace (tpl $.Values.app.shortName $.) $alias) }}
+          {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace (tpl $.Values.app.shortName $) $alias) }}
 {{ template "ingress.template" $aliasedIngressTemplateArgs }}
         {{ end }}
       {{ end }}
@@ -902,7 +902,7 @@ spec:
              NOTE! we replace via app.shortName match, why? see fullAppIdentifier 
              var construction @ ~line 42 */}}
       {{ range $alias := $.Values.aliases }}
-        {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace (tpl $.Values.app.shortName $.) $alias) }}
+        {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace (tpl $.Values.app.shortName $) $alias) }}
 {{ template "ingress.template" $aliasedIngressTemplateArgs }}
       {{ end }}
 
