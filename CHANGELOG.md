@@ -1,3 +1,6 @@
+# 1.1.16
+* Fix bug w/ missing `tpl` parsing on `app.shortName` references
+
 # 1.1.15
 * Fix bug with extra `Ingress` that gets generated per `aliases` when `app.shortName` is in use. 
 * Make `app.shortName` required
