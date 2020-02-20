@@ -5,6 +5,7 @@
 {{ $_ := required "image.repository is REQUIRED!" .Values.image.repository }}
 {{ $_ := required "image.tag is REQUIRED!" .Values.image.tag }}
 {{ $_ := required "app.name is REQUIRED!" .Values.app.name }}
+{{ $_ := required "app.shortName is REQUIRED! (if you don't have one, just default it to app.name)" .Values.app.shortName }}
 {{ $_ := required "app.context is REQUIRED!" .Values.app.context }}
 {{ $_ := required "app.environment is REQUIRED!" .Values.app.environment }}
 {{ $_ := required "healthcheck.liveness.containerPort is REQUIRED!" .Values.healthcheck.liveness.containerPort }}
@@ -47,7 +48,7 @@
 {{ $_ :=  set . "fullAppIdentifier_short" ($tmpFullAppId | replace "-" "_" | replace "." "_" | camelcase) }}
 {{ $_ :=  set . "fullAppIdentifier_hash" ($tmpFullAppId | adler32sum) }}
 {{ $_ :=  set . "fullAppIdentifier" ((gt (len .fullAppIdentifier_full) 63) | ternary .fullAppIdentifier_short .fullAppIdentifier_full)}}
-{{ $_ :=  set . "fullAppIdentifier" ((gt (len .fullAppIdentifier) 63) | ternary (printf "%s-%s-%s" .Values.app.name .Values.app.context .fullAppIdentifier_hash) .fullAppIdentifier)}}
+{{ $_ :=  set . "fullAppIdentifier" ((gt (len .fullAppIdentifier) 63) | ternary (printf "%s-%s-%s" .Values.app.shortName .Values.app.context .fullAppIdentifier_hash) .fullAppIdentifier)}}
 
 
 {{- /* ---------------------------------------------------------------
@@ -71,6 +72,7 @@
 
 {{- define "stdlabels.tpl" }}
 "{{ .root.Values.labelNames.appName }}": {{ .root.Values.app.name }}
+"{{ .root.Values.labelNames.appShortName }}": {{ .root.Values.app.shortName }}
 "{{ .root.Values.labelNames.appContext }}": {{ .root.Values.app.context }}
 "{{ .root.Values.labelNames.appEnvironment }}": {{ .root.Values.app.environment }}
 "{{ .root.Values.labelNames.appVersion }}": {{ .root.Values.image.tag }}
@@ -877,9 +879,12 @@ spec:
 {{ template "default.validator.hooks" $ingressTemplateArgs }}
 
         {{- /* FOR EACH ALIAS, we alter the 'objectIdentifier' key of the args
-               and then render a new ingress w/ the alias as the name/fqdn/host */}}
+               and then render a new ingress w/ the alias as the name/fqdn/host 
+               
+             NOTE! we replace via app.shortName match, why? see fullAppIdentifier 
+             var construction @ ~line 42 */}}
         {{ range $alias := $.Values.aliases }}
-          {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace $.Values.app.name $alias) }}
+          {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace $.Values.app.shortName $alias) }}
 {{ template "ingress.template" $aliasedIngressTemplateArgs }}
         {{ end }}
       {{ end }}
@@ -892,9 +897,12 @@ spec:
 {{ template "default.validator.hooks" $ingressTemplateArgs }}
 
       {{- /* FOR EACH ALIAS, we alter the 'objectIdentifier' key of the args
-             and then render a new ingress w/ the alias as the name/fqdn/host */}}
+             and then render a new ingress w/ the alias as the name/fqdn/host 
+             
+             NOTE! we replace via app.shortName match, why? see fullAppIdentifier 
+             var construction @ ~line 42 */}}
       {{ range $alias := $.Values.aliases }}
-        {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace $.Values.app.name $alias) }}
+        {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace $.Values.app.shortName $alias) }}
 {{ template "ingress.template" $aliasedIngressTemplateArgs }}
       {{ end }}
 

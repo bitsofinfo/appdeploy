@@ -20,6 +20,10 @@ app:
 
   # REQUIRED: defaults to app.name, but you should tweak it if you run into
   # k8s length errors. tpl variable substitution supported here. See README
+  #
+  # shortName is used for all k8s version specific object name generation
+  # as well as ingress' by default. You MUST SET SHORT NAME!
+  #
   shortName: "{{ .Values.app.name }}"
 
 
@@ -35,6 +39,7 @@ image:
 # that will be applied to all created k8s objects
 labelNames:
   appName: "app-name"
+  appShortName: "app-shortname"
   appContext: "app-context"
   appEnvironment: "app-environment"
   appVersion: "app-version"

@@ -1,3 +1,8 @@
+# 1.1.15
+* Fix bug with extra `Ingress` that gets generated per `aliases` when `app.shortName` is in use. 
+* Make `app.shortName` required
+* Added new default label for `app-shortname`
+
 # 1.1.14
 * Added `resources.limits.memory` and `resources.requests.memory` in podtemplate
 
