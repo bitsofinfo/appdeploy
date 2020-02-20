@@ -72,7 +72,7 @@
 
 {{- define "stdlabels.tpl" }}
 "{{ .root.Values.labelNames.appName }}": {{ .root.Values.app.name }}
-"{{ .root.Values.labelNames.appShortName }}": {{ (tpl .Values.app.shortName .root) }}
+"{{ .root.Values.labelNames.appShortName }}": {{ (tpl .root.Values.app.shortName .root) }}
 "{{ .root.Values.labelNames.appContext }}": {{ .root.Values.app.context }}
 "{{ .root.Values.labelNames.appEnvironment }}": {{ .root.Values.app.environment }}
 "{{ .root.Values.labelNames.appVersion }}": {{ .root.Values.image.tag }}

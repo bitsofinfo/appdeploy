@@ -1,17 +1,4 @@
-# 1.1.17
-
-* Fix bug w/ `tpl` parsing on `app.shortName` references
-  
-# 1.1.16
-
-BROKEN DO NOT USE
-
-* Fix bug w/ missing `tpl` parsing on `app.shortName` references
-
 # 1.1.15
-
-BROKEN DO NOT USE
-
 * Fix bug with extra `Ingress` that gets generated per `aliases` when `app.shortName` is in use. 
 * Make `app.shortName` required
 * Added new default label for `app-shortname`
