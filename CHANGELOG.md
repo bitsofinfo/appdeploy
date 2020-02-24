@@ -1,3 +1,6 @@
+# 1.1.16
+* get rid of `clusterIP: None` for helm3 support: https://github.com/helm/helm/issues/6378
+
 # 1.1.15
 * Fix bug with extra `Ingress` that gets generated per `aliases` when `app.shortName` is in use. 
 * Make `app.shortName` required

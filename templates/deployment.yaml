@@ -553,7 +553,8 @@ spec:
     {{- end }}
   {{ if eq .Values.extraService.type "Headless" }}
   type: ClusterIP
-  clusterIP: None
+  # Removed for helm3 support: issue related https://github.com/helm/helm/issues/6378
+  #clusterIP: None 
   {{ else }}
   type: {{ .Values.extraService.type }}
   {{ end }}
