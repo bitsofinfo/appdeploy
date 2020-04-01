@@ -404,7 +404,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: {{ $.serviceAccountName }}
-  namespace: {{ $serviceAccountNamespace }}
 subjects:
 - kind: ServiceAccount
   name: {{ $.serviceAccountName }}
