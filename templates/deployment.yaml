@@ -801,7 +801,7 @@ spec:
 {{- $ingressFqdn := printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}
 ---
 # Version specific Ingress (one per port)
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   namespace: "{{ .root.Release.Namespace }}"
