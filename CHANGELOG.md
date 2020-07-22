@@ -3,9 +3,6 @@
 * added HPA support https://github.com/bitsofinfo/appdeploy/pull/14
 * packaged w/ helm 3
 
-# 1.1.17
-* Add option for Horizontal Pod Autoscaler
-
 # 1.1.16
 * Get rid of `roleRef.namespace`
 
