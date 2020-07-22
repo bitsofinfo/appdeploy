@@ -477,6 +477,41 @@ spec:
 
 
 {{- /* ---------------------------------------------------------------
+    Version specific autoscaler object
+---------------------------------------------------------------------- */}}
+---
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  namespace: "{{ $.Release.Namespace }}"
+  name: "{{ $.fullAppIdentifier }}"
+  labels:
+    {{ include "stdlabels.tpl" $.stdlabelsargs | indent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: "{{ $.fullAppIdentifier }}"
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+  {{- with .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ . }}
+  {{- end }}
+  {{- with .Values.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ . }}
+{{- end }}
+{{- end }}
+
+
+{{- /* ---------------------------------------------------------------
       Version specific Service object
 ---------------------------------------------------------------------- */}}
 ---
@@ -552,7 +587,7 @@ spec:
     {{- end }}
   {{ if eq .Values.extraService.type "Headless" }}
   type: ClusterIP
-  clusterIP: None 
+  clusterIP: None
   {{ else }}
   type: {{ .Values.extraService.type }}
   {{ end }}
@@ -878,9 +913,9 @@ spec:
 {{ template "default.validator.hooks" $ingressTemplateArgs }}
 
         {{- /* FOR EACH ALIAS, we alter the 'objectIdentifier' key of the args
-               and then render a new ingress w/ the alias as the name/fqdn/host 
-               
-             NOTE! we replace via app.shortName match, why? see fullAppIdentifier 
+               and then render a new ingress w/ the alias as the name/fqdn/host
+
+             NOTE! we replace via app.shortName match, why? see fullAppIdentifier
              var construction @ ~line 42 */}}
         {{ range $alias := $.Values.aliases }}
           {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace (tpl $.Values.app.shortName $) $alias) }}
@@ -896,9 +931,9 @@ spec:
 {{ template "default.validator.hooks" $ingressTemplateArgs }}
 
       {{- /* FOR EACH ALIAS, we alter the 'objectIdentifier' key of the args
-             and then render a new ingress w/ the alias as the name/fqdn/host 
-             
-             NOTE! we replace via app.shortName match, why? see fullAppIdentifier 
+             and then render a new ingress w/ the alias as the name/fqdn/host
+
+             NOTE! we replace via app.shortName match, why? see fullAppIdentifier
              var construction @ ~line 42 */}}
       {{ range $alias := $.Values.aliases }}
         {{ $aliasedIngressTemplateArgs := set $ingressTemplateArgs "objectIdentifier" ($.fullAppIdentifier | replace (tpl $.Values.app.shortName $) $alias) }}

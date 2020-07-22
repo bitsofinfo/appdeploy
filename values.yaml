@@ -238,6 +238,16 @@ resources:
 #    memory: "250Mi" # example only
 
 
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 2
+  # if enabled, you need to set at least one of the below options
+  #targetCPUUtilizationPercentage: 75
+  #targetMemoryUtilizationPercentage: 75
+
+
 # Healthcheck customization
 # YOU must provide containerPort for each one
 healthcheck:
