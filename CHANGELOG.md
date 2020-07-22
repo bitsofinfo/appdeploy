@@ -1,5 +1,7 @@
-# TBD
+# 1.2.0
 * change ingress to `networking.k8s.io/v1beta1`
+* added HPA support https://us02web.zoom.us/j/82468024429
+* packaged w/ helm 3
 
 # 1.1.17
 * Add option for Horizontal Pod Autoscaler
