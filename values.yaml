@@ -239,6 +239,7 @@ resources:
 
 
 # Horizontal Pod Autoscaler
+# This is optional via the flag "enabled"
 autoscaling:
   enabled: false
   minReplicas: 1
@@ -246,6 +247,17 @@ autoscaling:
   # if enabled, you need to set at least one of the below options
   #targetCPUUtilizationPercentage: 75
   #targetMemoryUtilizationPercentage: 75
+
+
+# Pod Disruption Budget
+# This is optional via the flag "enabled"
+disruptionBudget:
+  enabled: false
+  # if enabled, you need to set EITHER maxUnavailable OR minAvailable.  NOT BOTH!!
+  # can be an absolute number OR percentage
+  # https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
+  #maxUnavailable: 1
+  #minAvailable: 2
 
 
 # Healthcheck customization
