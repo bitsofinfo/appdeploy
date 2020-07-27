@@ -1,3 +1,6 @@
+# 1.3.0
+* Added optional `PodDisruptionBudget` support: https://github.com/bitsofinfo/appdeploy/pull/15
+
 # 1.2.0
 * change ingress to `networking.k8s.io/v1beta1`
 * added HPA support https://github.com/bitsofinfo/appdeploy/pull/14
