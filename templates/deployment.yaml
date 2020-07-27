@@ -15,6 +15,15 @@
   {{ $_ := required "bootstrapSecret.k8Secret.secretValue is REQUIRED!" .Values.bootstrapSecret.k8Secret.secretValue }}
 {{- end }}
 
+{{ if .Values.disruptionBudget.enabled }}
+  {{ if and (not .Values.disruptionBudget.minAvailable) (not .Values.disruptionBudget.maxUnavailable) }}
+    {{ printf "\nVALUES VALIDATION: If disruptionBudget.enabled=true, you must set either disruptionBudget.minAvailable or disruptionBudget.maxUnavailable" | fail }}
+  {{- end }}
+  {{ if and .Values.disruptionBudget.minAvailable .Values.disruptionBudget.maxUnavailable }}
+    {{ printf "\nVALUES VALIDATION: Specify either disruptionBudget.minAvailable or disruptionBudget.maxUnavailable, NOT BOTH" | fail }}
+  {{- end }}
+{{- end }}
+
 {{- /* ---------------------------------------------------------------
       VARIABLE/SETUP Auto Generated vars
 ---------------------------------------------------------------------- */}}
@@ -508,6 +517,37 @@ spec:
         name: cpu
         targetAverageUtilization: {{ . }}
 {{- end }}
+{{- end }}
+
+
+{{- /* ---------------------------------------------------------------
+    Version specific pod disruption budget object
+---------------------------------------------------------------------- */}}
+---
+{{- if .Values.disruptionBudget.enabled }}
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  namespace: "{{ $.Release.Namespace }}"
+  name: "{{ $.fullAppIdentifier }}"
+  labels:
+    {{ include "stdlabels.tpl" $.stdlabelsargs | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      "{{ .Values.labelNames.appName }}": {{ .Values.app.name }}
+      "{{ .Values.labelNames.appContext }}": {{ .Values.app.context }}
+      "{{ .Values.labelNames.appEnvironment }}": {{ .Values.app.environment }}
+      "{{ .Values.labelNames.appVersion }}": {{ .Values.image.tag }}
+      {{ if .Values.app.classifier }}
+      "{{ .Values.labelNames.appClassifier }}": {{ .Values.app.classifier }}
+      {{ end }}
+  {{ if .Values.disruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.disruptionBudget.minAvailable }}
+  {{ end }}
+  {{ if .Values.disruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.disruptionBudget.maxUnavailable }}
+  {{ end }}
 {{- end }}
 
 
