@@ -62,7 +62,8 @@ Depending on your `values` customizations, this Chart can produce the following 
 * **Service**: to access all the app's `containerPorts`
 * **Ingress**: one or more, depending on the apps `containerPorts` configuration with hostname naming convention `[appname]-[context]-[image.tag][-[classifier]][-[port]]` at the configured `ingress.dns.fqdnSuffix`
 * **Helm Hooks**: Post deploy/delete health checks (`Jobs`) and alerts to Slack as well as additional/optional arbitrary `Jobs` for doing things like migrations etc (i.e `hooks.custom.[hookname]` in `values.yaml`)
-* **Horizontal pod autoscaler**: OPTIONAL, you can configure an HPA to also be generated for your release
+* **Horizontal pod autoscaler**: OPTIONAL, scale number of replicas in a deployment based on CPU or memory usage metrics
+* **Pod Disruption Budget**: OPTIONAL, configure tolerance for unavailable replicas during planned upgrades/outages
 
 ## <a id="doesnot"></a>What its not intended for
 

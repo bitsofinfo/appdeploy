@@ -229,6 +229,7 @@ bootstrapSecret:
     fileName: "bootstrap-secret"
 
 # Resources customization
+# https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 resources:
   limits:
 #    cpu: "1" # example only
@@ -239,25 +240,26 @@ resources:
 
 
 # Horizontal Pod Autoscaler
+# https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
 # This is optional via the flag "enabled"
 autoscaling:
   enabled: false
   minReplicas: 1
   maxReplicas: 2
   # if enabled, you need to set at least one of the below options
-  #targetCPUUtilizationPercentage: 75
-  #targetMemoryUtilizationPercentage: 75
+  #targetCPUUtilizationPercentage: 75  # example only
+  #targetMemoryUtilizationPercentage: 75  # example only
 
 
 # Pod Disruption Budget
+# https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
 # This is optional via the flag "enabled"
 disruptionBudget:
   enabled: false
   # if enabled, you need to set EITHER maxUnavailable OR minAvailable.  NOT BOTH!!
   # can be an absolute number OR percentage
-  # https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
-  #maxUnavailable: 1
-  #minAvailable: 2
+  #maxUnavailable: "25%"  # example only
+  #minAvailable: 2  # example only
 
 
 # Healthcheck customization
