@@ -183,22 +183,22 @@ appdeploy:
 ## <a id="pack"></a>Helm package/update
 
 ```
-helm package . -d repo/charts/
-helm repo index repo/
+helm3 package . -d repo/charts/
+helm3 repo index repo/
 ```
 
 ## Using!
 
 ```
-helm repo add bitsofinfo-appdeploy https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo
-helm repo update
+helm3 repo add bitsofinfo-appdeploy https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo
+helm3 repo update
 ```
 
 ```
 # requirements.yaml
 dependencies:
 - name: appdeploy
-  version: "1.1.15"
+  version: "<TAG_VERSION>"
   repository: "https://raw.githubusercontent.com/bitsofinfo/appdeploy/master/repo"
 ```
 
