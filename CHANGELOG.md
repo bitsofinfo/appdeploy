@@ -1,4 +1,5 @@
 # 1.4.0
+* can only be used w/ kubernetes 1.18+
 * added value `ingress.k8sApiVersion` default to `networking.k8s.io/v1beta1`
 * added value `ingress.pathType` default to `ImplementationSpecific`, can only be used against k8s 1.18+
 * added value `ingress.ingressClassName` defaults to nothing `""`
