@@ -35,12 +35,13 @@ healthcheck:
 ingress:
   dns:
     fqdnSuffix: ".local"
+  ingressClassName: traefik
   metadata:
     labels:
       bitsofinfo-ingress: "yes"
     annotations:
       my-external-dns: enabled
-      kubernetes.io/ingress.class: traefik
+      #kubernetes.io/ingress.class: traefik
 
 hooks:
 

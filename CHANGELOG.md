@@ -1,3 +1,7 @@
+# 1.4.0
+* added value `ingress.k8sApiVersion` default to `networking.k8s.io/v1beta1`
+* added value `ingress.pathType` default to `ImplementationSpecific`
+* added value `ingress.ingressClassName` defaults to nothing `""`
 # 1.3.0
 * Added optional `PodDisruptionBudget` support: https://github.com/bitsofinfo/appdeploy/pull/15
 

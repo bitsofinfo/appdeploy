@@ -201,6 +201,14 @@ extraService:
 #     would yield: appName-context-version-classifier-something-x.local
 #
 ingress:
+  k8sApiVersion: "networking.k8s.io/v1beta1"
+  pathType: "ImplementationSpecific"
+
+  # the ingressClassName required for networking.k8s.io/v1
+  # otherwise defaults to nothing (empty string), won't be applied
+  # this CANNOT co-exist w/ annotation "kubernetes.io/ingress.class"
+  ingressClassName: ""
+
   dns:
     fqdnSuffix: ".local"
     fqdnSuffixPrefix: "" # default nothing, this is pre-pended to the fqdnSuffix

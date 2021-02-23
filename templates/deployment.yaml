@@ -876,7 +876,7 @@ spec:
 {{- $ingressFqdn := printf "%s-%s%s%s" .objectIdentifier (.containerPort.port | toString) .root.Values.ingress.dns.fqdnSuffixPrefix .root.Values.ingress.dns.fqdnSuffix }}
 ---
 # Version specific Ingress (one per port)
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: {{ .root.Values.ingress.k8sApiVersion }}
 kind: Ingress
 metadata:
   namespace: "{{ .root.Release.Namespace }}"
@@ -905,6 +905,10 @@ metadata:
     {{ end }}
 
 spec:
+  {{ if .root.Values.ingress.ingressClassName }}
+  ingressClassName: {{ .root.Values.ingress.ingressClassName }}
+  {{ end }}
+  
   {{ if .root.Values.ingress.tls.enabled }}
   tls:
   - hosts:
@@ -915,7 +919,8 @@ spec:
   - host: {{ $ingressFqdn }}
     http:
       paths:
-      - backend:
+      - pathType: {{ .root.Values.ingress.pathType }}
+        backend:
           serviceName: {{ .root.fullAppIdentifier }}
           servicePort: {{ .containerPort.port }}
 {{ end -}}

@@ -20,18 +20,20 @@ helm repo update
 ```
 
 Let's deploy a dummy app using the chart!
+
 ```
-helm install \
+helm3 install \
+  myapp-1.0 \
+  bitsofinfo-appdeploy/appdeploy \
   --debug \
   --namespace bitsofinfo-apps \
-  --name myapp-1.0 \
-  bitsofinfo-appdeploy/appdeploy --version 1.1.16 \
+  --version 1.1.16 \
   -f example.yaml
 ```
 
 Wait for the install to complete:
 ```
-helm list
+helm3 list -n bitsofinfo-apps
 
 kubectl get all -n bitsofinfo-apps
 
@@ -55,9 +57,9 @@ Hit the actual deployed artifact at: (assuming you have DNS setup) You should ge
 
 Cleanup:
 ```
-helm delete --purge myapp-1.0
+helm3 delete myapp-1.0 -n bitsofinfo-apps
 
-helm delete --purge bitsofinfo-traefik
+helm3 delete bitsofinfo-traefik -n kube-system
 ```
 
 You should see a app delete notification (`hooks.default.postDelete`) in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNzE1OTM1MDY5MDYwLTk4MTc3MjA4Y2YwNjFkYjRlYjZjZWMyNWExY2QxN2JmMmMyOGViMzYzYmE5NjcyOGE5ZWFjYTM5MmVjNzUxMjc))

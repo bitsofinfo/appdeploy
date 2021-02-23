@@ -4,7 +4,7 @@ Lets get a [Traefik Ingress Controller Deployed](https://github.com/helm/charts/
 
 *Note Traefik is not a requirement to use `appdeploy` but just the one picked for this example...*
 ```
-helm install stable/traefik --name bitsofinfo-traefik \
+helm3 install bitsofinfo-traefik stable/traefik \
   --namespace kube-system \
   --set dashboard.enabled=true \
   --set ssl.enabled=true \
@@ -30,6 +30,8 @@ You have a host entry (or legit DNS) setup for the `LoadBalancer` for the instal
 sudo route -n add -net $(cat ~/.minikube/profiles/minikube/config.json | jq -r ".KubernetesConfig.ServiceCIDR") $(minikube ip)
 kubectl run minikube-lb-patch --replicas=1 --image=elsonrodriguez/minikube-lb-patch:0.1 --namespace=kube-system
 ```
+
+Alternatively you can also just do `minikube service bitsofinfo-traefik -n kube-system` 
 
 List the Traefik services
 ```
