@@ -919,10 +919,11 @@ spec:
   - host: {{ $ingressFqdn }}
     http:
       paths:
-      - pathType: {{ .root.Values.ingress.pathType }}
-        backend:
+      - backend:
           serviceName: {{ .root.fullAppIdentifier }}
           servicePort: {{ .containerPort.port }}
+        {{ if .root.Values.ingress.pathType }}pathType: {{ .root.Values.ingress.pathType }}{{ end }}
+        
 {{ end -}}
 
 

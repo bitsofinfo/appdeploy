@@ -36,6 +36,7 @@ ingress:
   dns:
     fqdnSuffix: ".local"
   ingressClassName: traefik
+  pathType: "ImplementationSpecific"
   metadata:
     labels:
       bitsofinfo-ingress: "yes"

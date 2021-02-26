@@ -1,3 +1,5 @@
+# 1.4.1
+* make `ingress.pathType` be optional
 # 1.4.0
 * can only be used w/ kubernetes 1.18+
 * added value `ingress.k8sApiVersion` default to `networking.k8s.io/v1beta1`

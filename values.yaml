@@ -202,11 +202,16 @@ extraService:
 #
 ingress:
   k8sApiVersion: "networking.k8s.io/v1beta1"
-  pathType: "ImplementationSpecific"
+
+  # should only be set to something on k8s 1.18+
+  # leaving as a blank string "" will not emit it
+  # into the ingress object
+  pathType: ""
 
   # the ingressClassName required for networking.k8s.io/v1
   # otherwise defaults to nothing (empty string), won't be applied
   # this CANNOT co-exist w/ annotation "kubernetes.io/ingress.class"
+  # only available in k8s 1.18+ 
   ingressClassName: ""
 
   dns:
