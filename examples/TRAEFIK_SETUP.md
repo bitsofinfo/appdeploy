@@ -4,7 +4,7 @@ Lets get a [Traefik Ingress Controller Deployed](https://github.com/helm/charts/
 
 *Note Traefik is not a requirement to use `appdeploy` but just the one picked for this example...*
 ```
-helm3 install bitsofinfo-traefik stable/traefik \
+helm install bitsofinfo-traefik stable/traefik \
   --namespace kube-system \
   --set dashboard.enabled=true \
   --set ssl.enabled=true \

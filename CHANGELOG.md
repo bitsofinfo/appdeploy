@@ -1,3 +1,5 @@
+# 1.4.2
+* Handle `rule[].backend` service yaml schema changes when `ingress.k8sApiVersion = networking.k8s.io/v1` see: https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.19.md#v1190
 # 1.4.1
 * make `ingress.pathType` be optional
 # 1.4.0

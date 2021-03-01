@@ -920,10 +920,17 @@ spec:
     http:
       paths:
       - backend:
+          {{ if eq .root.Values.ingress.k8sApiVersion "networking.k8s.io/v1" }}
+          service:
+            name: {{ .root.fullAppIdentifier }}
+            port:
+              number: {{ .containerPort.port }}
+          {{ else }}
           serviceName: {{ .root.fullAppIdentifier }}
           servicePort: {{ .containerPort.port }}
+          {{ end }}
         {{ if .root.Values.ingress.pathType }}pathType: {{ .root.Values.ingress.pathType }}{{ end }}
-        
+
 {{ end -}}
 
 

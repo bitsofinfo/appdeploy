@@ -22,7 +22,7 @@ helm repo update
 Let's deploy a dummy app using the chart!
 
 ```
-helm3 install \
+helm install \
   myapp-1.0 \
   bitsofinfo-appdeploy/appdeploy \
   --debug \
@@ -33,7 +33,7 @@ helm3 install \
 
 Wait for the install to complete:
 ```
-helm3 list -n bitsofinfo-apps
+helm list -n bitsofinfo-apps
 
 kubectl get all -n bitsofinfo-apps
 
@@ -57,9 +57,9 @@ Hit the actual deployed artifact at: (assuming you have DNS setup) You should ge
 
 Cleanup:
 ```
-helm3 delete myapp-1.0 -n bitsofinfo-apps
+helm delete myapp-1.0 -n bitsofinfo-apps
 
-helm3 delete bitsofinfo-traefik -n kube-system
+helm delete bitsofinfo-traefik -n kube-system
 ```
 
 You should see a app delete notification (`hooks.default.postDelete`) in the https://bitsofinfo.slack.com `#bitsofinfo-dev` channel ([self signup to channel](https://join.slack.com/t/bitsofinfo/shared_invite/enQtNzE1OTM1MDY5MDYwLTk4MTc3MjA4Y2YwNjFkYjRlYjZjZWMyNWExY2QxN2JmMmMyOGViMzYzYmE5NjcyOGE5ZWFjYTM5MmVjNzUxMjc))
