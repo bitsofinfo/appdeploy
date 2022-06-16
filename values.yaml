@@ -55,6 +55,15 @@ env:
   #ENV_VAR_2:
   # value: "something"
 
+# the configMaps and/or secrets to mount env vars from
+# only valid envFrom references are configMapRef and secretRef
+# but you can have multiples of each
+envFrom: []
+  # - secretRef:
+  #     name: "env-secret-name"
+  # - configMapRef:
+  #     name: "env-configmap-name"
+
 
 # The number of replicas for the generated Deployment
 replicaCount: 1
@@ -211,7 +220,7 @@ ingress:
   # the ingressClassName required for networking.k8s.io/v1
   # otherwise defaults to nothing (empty string), won't be applied
   # this CANNOT co-exist w/ annotation "kubernetes.io/ingress.class"
-  # only available in k8s 1.18+ 
+  # only available in k8s 1.18+
   ingressClassName: ""
 
   dns:
