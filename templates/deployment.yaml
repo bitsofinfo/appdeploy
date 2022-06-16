@@ -335,6 +335,11 @@ template:
             {{- end -}}
           {{- end }}
 
+        {{- if .podconfig.envFrom }}
+        envFrom:
+          {{ .podconfig.envFrom | toYaml | nindent 10 }}
+        {{ end }}
+
         {{ if .podconfig.command }}
 
           {{ if .podconfig.command.command }}
@@ -475,6 +480,7 @@ spec:
 {{- $_ := set $podConfig "resources" .Values.resources }}
 {{- $_ := set $podConfig "healthcheck" .Values.healthcheck }}
 {{- $_ := set $podConfig "env" .Values.env }}
+{{- $_ := set $podConfig "envFrom" .Values.envFrom }}
 {{- $_ := set $podConfig "command" .Values.command }}
 {{- if hasKey .Values "hostname" }}
   {{- $_ := set $podConfig "hostname" .Values.hostname }}
@@ -908,7 +914,7 @@ spec:
   {{ if .root.Values.ingress.ingressClassName }}
   ingressClassName: {{ .root.Values.ingress.ingressClassName }}
   {{ end }}
-  
+
   {{ if .root.Values.ingress.tls.enabled }}
   tls:
   - hosts:
