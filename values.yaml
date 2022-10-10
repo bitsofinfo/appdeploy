@@ -129,6 +129,10 @@ pod:
   #  - name: "label-name"
   #    value: "label value" # PARSED by Helm 'tpl' function passed $
 
+  annotations: []
+  #  - name: "annotation-name"
+  #    value: "annotation value" # PARSED by Helm 'tpl' function passed $
+
   # Optional hostname/subdomain k8s dns related attrs for the spec
   # tpl variable substitution supported in values here. See README
   # https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
