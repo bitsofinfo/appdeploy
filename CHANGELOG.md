@@ -1,3 +1,5 @@
+# 1.4.4
+* pod annotation support
 # 1.4.3
 * added `envFrom` support https://github.com/bitsofinfo/appdeploy/pull/17
 # 1.4.2
