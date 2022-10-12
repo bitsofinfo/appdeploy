@@ -164,6 +164,7 @@ stringData:
         labels: (typically from pod.labels )
 
         (for all below, see values.yaml for structure)
+        annotations:
         image:
         restartPolicy:
         imagePullSecrets:
@@ -173,6 +174,7 @@ stringData:
         resources:
         healthcheck:
         env:
+        envFrom:
         command:
         hostname:
         subdomain:
@@ -189,6 +191,13 @@ template:
       "{{ $label.name }}": "{{ tpl $label.value $root }}"
         {{- end }}
       {{- end }}
+    {{ if .podconfig.annotations }}
+    annotations:
+      {{- range $annotation := .podconfig.annotations }}
+      {{ $annotation.name }}: "{{ tpl $annotation.value $root }}"
+      {{- end }}
+    {{- end }}
+
   spec:
 
     {{- if hasKey .podconfig "hostname" }}
@@ -481,6 +490,7 @@ spec:
 {{- $_ := set $podConfig "healthcheck" .Values.healthcheck }}
 {{- $_ := set $podConfig "env" .Values.env }}
 {{- $_ := set $podConfig "envFrom" .Values.envFrom }}
+{{- $_ := set $podConfig "annotations" .Values.pod.annotations }}
 {{- $_ := set $podConfig "command" .Values.command }}
 {{- if hasKey .Values "hostname" }}
   {{- $_ := set $podConfig "hostname" .Values.hostname }}
