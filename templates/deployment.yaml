@@ -194,7 +194,7 @@ template:
     {{ if .podconfig.annotations }}
     annotations:
       {{- range $annotation := .podconfig.annotations }}
-      {{ $annotation.name }}: "{{ tpl $annotation.value $root }}"
+      {{ $annotation.name }}: {{ tpl $annotation.value $root | quote }}
       {{- end }}
     {{- end }}
 
