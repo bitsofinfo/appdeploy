@@ -1,16 +1,24 @@
+# 1.4.5
+* fix pod annotation support
+  
 # 1.4.4
 * pod annotation support
+  
 # 1.4.3
 * added `envFrom` support https://github.com/bitsofinfo/appdeploy/pull/17
+  
 # 1.4.2
 * Handle `rule[].backend` service yaml schema changes when `ingress.k8sApiVersion = networking.k8s.io/v1` see: https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.19.md#v1190
+  
 # 1.4.1
 * make `ingress.pathType` be optional
+  
 # 1.4.0
 * can only be used w/ kubernetes 1.18+
 * added value `ingress.k8sApiVersion` default to `networking.k8s.io/v1beta1`
 * added value `ingress.pathType` default to `ImplementationSpecific`, can only be used against k8s 1.18+
 * added value `ingress.ingressClassName` defaults to nothing `""`
+  
 # 1.3.0
 * Added optional `PodDisruptionBudget` support: https://github.com/bitsofinfo/appdeploy/pull/15
 
