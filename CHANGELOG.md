@@ -1,3 +1,6 @@
+# 1.4.6
+* Add parameter for ingress protocol annotation key name
+
 # 1.4.5
 * fix pod annotation support
   
