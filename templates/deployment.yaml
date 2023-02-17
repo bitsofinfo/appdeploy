@@ -908,9 +908,9 @@ metadata:
     {{ end }}
   annotations:
     {{ if eq .containerPort.tls true }}
-    ingress.kubernetes.io/protocol: "https"
+    {{ .root.Values.ingress.backendProtocolAnnotationKey }}: "https"
     {{ else }}
-    ingress.kubernetes.io/protocol: "http"
+    {{ .root.Values.ingress.backendProtocolAnnotationKey }}: "http"
     {{ end }}
 
     {{ if .root.Values.ingress.metadata.annotations }}
