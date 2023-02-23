@@ -223,7 +223,7 @@ ingress:
 
   # name of annotation key that tells the ingress controller
   # if backend is http or https
-  backendProtocolAnnotationKey: "ingress.kubernetes.io"
+  backendProtocolAnnotationKey: "ingress.kubernetes.io/protocol"
 
   # the ingressClassName required for networking.k8s.io/v1
   # otherwise defaults to nothing (empty string), won't be applied
