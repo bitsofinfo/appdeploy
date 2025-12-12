@@ -1,3 +1,6 @@
+# 1.4.8
+* Update apiVersion for PodDisruptionBudget
+
 # 1.4.7
 * Fix `ingress.backendProtocolAnnotationKey` default value
 
