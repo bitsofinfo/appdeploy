@@ -1,3 +1,6 @@
+# 1.5.0
+* Add support for service annotations
+
 # 1.4.8
 * Update apiVersion for PodDisruptionBudget
 
