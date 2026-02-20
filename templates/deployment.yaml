@@ -582,6 +582,12 @@ metadata:
     {{- range $label := .Values.service.labels }}
     "{{ $label.name }}": "{{ tpl $label.value $ }}"
     {{- end }}
+  {{ if .Values.service.annotations }}
+  annotations:
+    {{- range $annotationName,$annotationValue := .Values.service.annotations }}
+    "{{ tpl $annotationName $ }}": "{{ tpl $annotationValue $ }}"
+    {{- end }}
+  {{ end }}
 spec:
   selector:
     "{{ .Values.labelNames.appName }}": {{ .Values.app.name }}
